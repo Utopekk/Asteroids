@@ -1,6 +1,8 @@
 import pygame
 import sys
 import math
+import time
+import random
 
 
 class SpaceObject:
@@ -41,10 +43,10 @@ def on_user_update(f_elapsed_time):
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_LEFT]:
-            player.angle -= 5.0 * f_elapsed_time
+            player.angle -= 1.2 * f_elapsed_time
 
         if keys[pygame.K_RIGHT]:
-            player.angle += 5.0 * f_elapsed_time
+            player.angle += 1.2 * f_elapsed_time
 
         if keys[pygame.K_UP]:
             player.dx += math.sin(player.angle) * 20.0 * f_elapsed_time
@@ -53,7 +55,8 @@ def on_user_update(f_elapsed_time):
         if keys[pygame.K_SPACE]:
             vec_bullets.append(SpaceObject(n_size=0, x=player.x, y=player.y, dx=50.0 * math.sin(player.angle),
                                            dy=-50.0 * math.cos(player.angle), angle=0.0))
-
+            time.sleep(1)
+            
         player.x += player.dx * f_elapsed_time
         player.y += player.dy * f_elapsed_time
 
@@ -82,7 +85,7 @@ def on_user_update(f_elapsed_time):
         b.x += b.dx * f_elapsed_time
         b.y += b.dy * f_elapsed_time
         b.x, b.y = Wrap(b.x, b.y)
-        pygame.draw.line(screen, white, (b.x, b.y), (b.x, b.y), width=4)
+        pygame.draw.rect(screen, white, pygame.Rect(b.x, b.y, 5, 5))
 
 
 def Wrap(ix, iy):
