@@ -32,9 +32,13 @@ player.dx = 0.0
 player.dy = 0.0
 player.angle = 0.0
 player.n_size = 0.0
+intervalShooting = 1
+lastTimeShot = 0
 
 
 def on_user_update(f_elapsed_time):
+    global intervalShooting
+    global lastTimeShot
     for a in vec_asteroids:
         a.x += a.dx * f_elapsed_time
         a.y += a.dy * f_elapsed_time
@@ -52,11 +56,12 @@ def on_user_update(f_elapsed_time):
             player.dx += math.sin(player.angle) * 20.0 * f_elapsed_time
             player.dy += -math.cos(player.angle) * 20.0 * f_elapsed_time
 
-        if keys[pygame.K_SPACE]:
+        now = int(time.time())
+        if keys[pygame.K_SPACE] and (now - lastTimeShot) >= intervalShooting:
             vec_bullets.append(SpaceObject(n_size=0, x=player.x, y=player.y, dx=50.0 * math.sin(player.angle),
-                                           dy=-50.0 * math.cos(player.angle), angle=0.0))
-            time.sleep(1)
-            
+                                            dy=-50.0 * math.cos(player.angle), angle=0.0))
+            lastTimeShot = now
+
         player.x += player.dx * f_elapsed_time
         player.y += player.dy * f_elapsed_time
 
