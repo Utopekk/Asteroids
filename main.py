@@ -15,6 +15,11 @@ class SpaceObject:
         self.dy = dy
         self.angle = angle
         self.creation_time = time.time()
+class Player (SpaceObject):
+    def __init__(self, n_size, x, y, dx, dy, angle):
+        super().__init__(n_size, x, y, dx, dy, angle)   
+        self.acceleration = 0.1 
+        self.speed = 10     
 class Asteroid (SpaceObject):
     def __init__(self, n_size, x, y, dx, dy, angle):
         super().__init__(n_size, x, y, dx, dy, angle)        
@@ -34,11 +39,8 @@ class AsteroidsGame:
         self.white = (255, 255, 255)
         self.black = (0, 0, 0)
         self.vec_asteroids = [Asteroid(n_size=40, x=0.0, y=0.0, dx=10.0, dy=10.0, angle=0.0)]
-        self.player = SpaceObject(n_size=20.0, x=screen_width / 2.0, y=screen_height / 2.0, dx=0.0, dy=0.0, angle=0.0)
+        self.player = Player(n_size=20.0, x=screen_width / 2.0, y=screen_height / 2.0, dx=0.0, dy=0.0, angle=0.0)
         self.vec_bullets = []
-        self.bullet_acceleration = 1
-        self.player_acceleration = 0.1
-        self.player_speed = 10
         self.interval_shooting = 1
         self.last_time_shot = 0
         self.counter_shooting = 0
@@ -56,34 +58,33 @@ class AsteroidsGame:
             self.player.angle += 1.2 * self.elapsed_time
 
         if keys[pygame.K_UP]:
-            acceleration = 20.0 * self.player_acceleration
+            acceleration = 20.0 * self.player.acceleration
             self.player.dx += math.sin(self.player.angle) * acceleration
             self.player.dy += -math.cos(self.player.angle) * acceleration
 
             # Calculate the new speed
-            self.player_speed = math.sqrt(self.player.dx**2 + self.player.dy**2)
+            self.player.speed = math.sqrt(self.player.dx**2 + self.player.dy**2)
 
         
             # Limit the speed
             max_speed = 140.0  # km/min
-            if self.player_speed > max_speed:
-                scale_factor = max_speed / self.player_speed
+            if self.player.speed > max_speed:
+                scale_factor = max_speed / self.player.speed
                 self.player.dx *= scale_factor
                 self.player.dy *= scale_factor
             # self.player_acceleration += 0.001 | better acceleration
-        elif not (self.player_speed <= 10):
+        elif not (self.player.speed <= 10):
             damping_factor = 0.98
             self.player.dx *= damping_factor
             self.player.dy *= damping_factor
-            self.player_speed = math.sqrt(self.player.dx**2 + self.player.dy**2)
+            self.player.speed = math.sqrt(self.player.dx**2 + self.player.dy**2)
 
 
         now = int(time.time())
         if keys[pygame.K_SPACE] and (now - self.last_time_shot) >= self.interval_shooting:
             acceleration = 1
-            if(self.player_speed > 110):
-                acceleration += self.player_speed * 0.01
-            print(acceleration)    
+            if(self.player.speed > 110):
+                acceleration += self.player.speed * 0.01  
             self.vec_bullets.append(Bullet(
                 n_size=0,
                 x=self.player.x,
@@ -212,7 +213,7 @@ class AsteroidsGame:
                 font = pygame.font.Font(None, 72)
                 game_over_text = font.render("Game Over", True, self.white)
                 self.screen.blit(game_over_text, (self.screen_width // 2 - 100, self.screen_height // 2 - 20))
-
+                
             pygame.display.flip()
             clock.tick(60)
 
