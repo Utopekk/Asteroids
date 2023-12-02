@@ -2,6 +2,7 @@ import pygame
 import sys
 import math
 import time
+import random
 
 
 # Constructor SpaceObject
@@ -31,9 +32,13 @@ class AsteroidsGame:
         self.vec_bullets = []
         self.interval_shooting = 1
         self.last_time_shot = 0
+        self.game_over = False
+        self.game_over_time = 0
 
     # Handle input
     def handle_input(self):
+        if self.game_over:
+            return
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_LEFT]:
@@ -69,9 +74,8 @@ class AsteroidsGame:
 
     # Drawing
     def draw_objects(self):
-        # Draw square
-        for obj in self.vec_asteroids:
-            pygame.draw.rect(self.screen, self.white, (int(obj.x), int(obj.y), obj.n_size, obj.n_size))
+        # Draw circles instead of squares
+        self.draw_circles()
 
         # Draw bullets
         for bullet in self.vec_bullets:
@@ -109,9 +113,43 @@ class AsteroidsGame:
             oy = iy - self.screen_height
         return ox, oy
 
+    # Spawn asteroid
+    def create_random_circles(self, num_circles):
+        for _ in range(num_circles):
+            size = random.randint(10, 30)  # Random size between 10 and 30
+            x = random.uniform(0, self.screen_width)  # Random x position
+            y = random.uniform(0, self.screen_height)  # Random y position
+
+            self.vec_asteroids.append(SpaceObject(
+                n_size=size,
+                x=x,
+                y=y,
+                dx=random.uniform(-10, 10),  # Random speed in x direction
+                dy=random.uniform(-10, 10),  # Random speed in y direction
+                angle=random.uniform(0, 2 * math.pi)  # Random initial angle
+            ))
+
+    # Drawing function for circles
+    def draw_circles(self):
+        for obj in self.vec_asteroids:
+            pygame.draw.circle(self.screen, self.white, (int(obj.x), int(obj.y)), int(obj.n_size / 2))
+
+    # Colilisions
+    def check_collisions(self):
+        if self.game_over:
+            return
+
+        for asteroid in self.vec_asteroids:
+            distance = math.sqrt((self.player.x - asteroid.x)**2 + (self.player.y - asteroid.y)**2)
+            if distance < (self.player.n_size / 2 + asteroid.n_size / 2):
+                print("Game Over")
+                self.game_over = True
+                self.game_over_time = time.time()
+
     # Main setup
     def run_game(self):
         clock = pygame.time.Clock()
+        self.create_random_circles(num_circles=5)
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -121,9 +159,19 @@ class AsteroidsGame:
             self.elapsed_time = 0.1
             self.handle_input()
             self.update_objects()
+            self.check_collisions()
 
             self.screen.fill(self.black)
             self.draw_objects()
+
+            if self.game_over:
+                if time.time() - self.game_over_time > 3:  # Zakończ grę po 3 sekundach
+                    pygame.quit()
+                    sys.exit()
+                self.screen.fill(self.black)
+                font = pygame.font.Font(None, 72)
+                game_over_text = font.render("Game Over", True, self.white)
+                self.screen.blit(game_over_text, (self.screen_width // 2 - 100, self.screen_height // 2 - 20))
 
             pygame.display.flip()
             clock.tick(60)
