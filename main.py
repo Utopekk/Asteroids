@@ -5,9 +5,8 @@ import time
 import random
 
 
-# Constructor SpaceObject
 class SpaceObject:
-    def __init__(self, n_size, x, y, dx, dy, angle):
+    def __init__(self, n_size, x, y, dx, dy, angle, vertices=None):
         self.n_size = n_size
         self.x = x
         self.y = y
@@ -15,20 +14,28 @@ class SpaceObject:
         self.dy = dy
         self.angle = angle
         self.creation_time = time.time()
-class Player (SpaceObject):
+        self.vertices = vertices
+
+
+class Player(SpaceObject):
     def __init__(self, n_size, x, y, dx, dy, angle):
-        super().__init__(n_size, x, y, dx, dy, angle)   
-        self.acceleration = 0.1 
-        self.speed = 10     
-class Asteroid (SpaceObject):
-    def __init__(self, n_size, x, y, dx, dy, angle):
-        super().__init__(n_size, x, y, dx, dy, angle)        
-class Bullet (SpaceObject):
+        super().__init__(n_size, x, y, dx, dy, angle)
+        self.acceleration = 0.1
+        self.speed = 10
+
+
+class Asteroid(SpaceObject):
+    def __init__(self, n_size, x, y, dx, dy, angle, vertices):
+        super().__init__(n_size, x, y, dx, dy, angle)
+        self.vertices = vertices
+
+
+class Bullet(SpaceObject):
     def __init__(self, n_size, x, y, dx, dy, angle, acceleration):
         super().__init__(n_size, x, y, dx, dy, angle)
         self.acceleration = acceleration
 
-# Constructor AsteroidsGame
+
 class AsteroidsGame:
     def __init__(self, screen_width, screen_height):
         pygame.init()
@@ -38,7 +45,11 @@ class AsteroidsGame:
         pygame.display.set_caption("Asteroids")
         self.white = (255, 255, 255)
         self.black = (0, 0, 0)
-        self.vec_asteroids = [Asteroid(n_size=40, x=0.0, y=0.0, dx=10.0, dy=10.0, angle=0.0)]
+        size = random.randint(20, 40)
+        x = random.uniform(0, self.screen_width)
+        y = random.uniform(0, self.screen_height)
+        vertices = self.generate_irregular_shape(size)
+        self.vec_asteroids = [Asteroid(n_size=size, x=x, y=y, dx=10.0, dy=10.0, angle=0.0, vertices=vertices)]
         self.player = Player(n_size=20.0, x=screen_width / 2.0, y=screen_height / 2.0, dx=0.0, dy=0.0, angle=0.0)
         self.vec_bullets = []
         self.interval_shooting = 1
@@ -46,10 +57,7 @@ class AsteroidsGame:
         self.counter_shooting = 0
         self.game_over = False
         self.game_over_time = 0
-    def toggle_fullscreen(self):
-        pygame.display.toggle_fullscreen()    
 
-    # Handle input
     def handle_input(self):
         keys = pygame.key.get_pressed()
 
@@ -65,28 +73,26 @@ class AsteroidsGame:
             self.player.dy += -math.cos(self.player.angle) * acceleration
 
             # Calculate the new speed
-            self.player.speed = math.sqrt(self.player.dx**2 + self.player.dy**2)
+            self.player.speed = math.sqrt(self.player.dx ** 2 + self.player.dy ** 2)
 
-        
             # Limit the speed
             max_speed = 140.0  # km/min
             if self.player.speed > max_speed:
                 scale_factor = max_speed / self.player.speed
                 self.player.dx *= scale_factor
                 self.player.dy *= scale_factor
-            # self.player_acceleration += 0.001 | better acceleration
+
         elif not (self.player.speed <= 10):
             damping_factor = 0.98
             self.player.dx *= damping_factor
             self.player.dy *= damping_factor
-            self.player.speed = math.sqrt(self.player.dx**2 + self.player.dy**2)
-
+            self.player.speed = math.sqrt(self.player.dx ** 2 + self.player.dy ** 2)
 
         now = int(time.time())
         if keys[pygame.K_SPACE] and (now - self.last_time_shot) >= self.interval_shooting:
             acceleration = 1
-            if(self.player.speed > 110):
-                acceleration += self.player.speed * 0.01  
+            if (self.player.speed > 110):
+                acceleration += self.player.speed * 0.01
             self.vec_bullets.append(Bullet(
                 n_size=0,
                 x=self.player.x,
@@ -99,29 +105,87 @@ class AsteroidsGame:
             self.last_time_shot = now
             self.counter_shooting += 1
 
-    # Update bullets and wrap objects
     def update_objects(self):
         self.vec_bullets = [b for b in self.vec_bullets if time.time() - b.creation_time <= 1.5]
 
-        for obj in self.vec_asteroids + [self.player] + self.vec_bullets:
-            obj.x += obj.dx * self.elapsed_time
-            obj.y += obj.dy * self.elapsed_time
-            obj.x, obj.y = self.wrap(obj.x, obj.y)
-
-    # Drawing
-    def draw_objects(self):
-        # Draw circles instead of squares
-        self.draw_circles()
-
-        # Draw bullets
         for bullet in self.vec_bullets:
+            bullet.x += bullet.dx * self.elapsed_time
+            bullet.y += bullet.dy * self.elapsed_time
+            bullet.x, bullet.y = self.wrap(bullet.x, bullet.y)
 
-            bullet.x += bullet.dx * self.elapsed_time * bullet.acceleration
-            bullet.y += bullet.dy * self.elapsed_time * bullet.acceleration
+        for asteroid in self.vec_asteroids:
+            asteroid.x += asteroid.dx * self.elapsed_time
+            asteroid.y += asteroid.dy * self.elapsed_time
+            asteroid.x, asteroid.y = self.wrap(asteroid.x, asteroid.y)
+
+        self.player.x += self.player.dx * self.elapsed_time
+        self.player.y += self.player.dy * self.elapsed_time
+        self.player.x, self.player.y = self.wrap(self.player.x, self.player.y)
+
+    def draw_objects(self):
+        self.draw_asteroids()
+        for bullet in self.vec_bullets:
+            bullet.x += bullet.dx * self.elapsed_time
+            bullet.y += bullet.dy * self.elapsed_time
             bullet.x, bullet.y = self.wrap(bullet.x, bullet.y)
             pygame.draw.rect(self.screen, self.white, pygame.Rect(bullet.x, bullet.y, 5, 5))
 
-        # Draw the player's ship as a triangle
+        self.draw_player_ship()
+
+    def wrap(self, ix, iy):
+        ox, oy = ix, iy
+        if ix < 0.0:
+            ox = ix + self.screen_width
+        elif ix >= self.screen_width:
+            ox = ix - self.screen_width
+        if iy < 0.0:
+            oy = iy + self.screen_height
+        elif iy >= self.screen_height:
+            oy = iy - self.screen_height
+        return ox, oy
+
+    def create_random_asteroids(self, num_asteroids):
+        for _ in range(num_asteroids):
+            size = random.randint(20, 40)
+            x = random.uniform(0, self.screen_width)
+            y = random.uniform(0, self.screen_height)
+            vertices = self.generate_irregular_shape(size)
+            self.vec_asteroids.append(Asteroid(
+                n_size=size,
+                x=x,
+                y=y,
+                dx=random.uniform(-10, 10),
+                dy=random.uniform(-10, 10),
+                angle=random.uniform(0, 2 * math.pi),
+                vertices=vertices
+            ))
+
+    def generate_irregular_shape(self, size):
+        num_vertices = random.randint(5, 10)
+        angle_increment = 2 * math.pi / num_vertices
+        vertices = []
+        for i in range(num_vertices):
+            radius = size + random.uniform(-size / 2, size / 2)
+            x = radius * math.cos(i * angle_increment)
+            y = radius * math.sin(i * angle_increment)
+            vertices.append((x, y))
+        return vertices
+
+    def draw_asteroids(self):
+        for asteroid in self.vec_asteroids:
+            rotated_vertices = self.rotate_vertices(asteroid.vertices, asteroid.angle)
+            translated_vertices = [(x + asteroid.x, y + asteroid.y) for x, y in rotated_vertices]
+            pygame.draw.polygon(self.screen, self.white, translated_vertices)
+
+    def rotate_vertices(self, vertices, angle):
+        rotated_vertices = []
+        for x, y in vertices:
+            rotated_x = x * math.cos(angle) - y * math.sin(angle)
+            rotated_y = x * math.sin(angle) + y * math.cos(angle)
+            rotated_vertices.append((rotated_x, rotated_y))
+        return rotated_vertices
+
+    def draw_player_ship(self):
         mx = [0.0, -20.0, 20.0]
         my = [-44.0, 20.0, 20.0]
 
@@ -135,72 +199,35 @@ class AsteroidsGame:
             sx[i] = sx[i] + self.player.x
             sy[i] = sy[i] + self.player.y
 
-        pygame.draw.polygon(self.screen, self.white, [(sx[0], sy[0]), (sx[1], sy[1]), (sx[2], sy[2])])
+        pygame.draw.polygon(self.screen, "RED", [(sx[0], sy[0]), (sx[1], sy[1]), (sx[2], sy[2])])
 
-    # If you go outside the map you teleport to the other side
-    def wrap(self, ix, iy):
-        ox, oy = ix, iy
-        if ix < 0.0:
-            ox = ix + self.screen_width
-        elif ix >= self.screen_width:
-            ox = ix - self.screen_width
-        if iy < 0.0:
-            oy = iy + self.screen_height
-        elif iy >= self.screen_height:
-            oy = iy - self.screen_height
-        return ox, oy
-
-    # Spawn asteroid
-    def create_random_circles(self, num_circles):
-        for _ in range(num_circles):
-            size = random.randint(10, 30)  # Random size
-            x = random.uniform(0, self.screen_width)  # Random x position
-            y = random.uniform(0, self.screen_height)  # Random y position
-
-            self.vec_asteroids.append(Asteroid(
-                n_size=size,
-                x=x,
-                y=y,
-                dx=random.uniform(-10, 10),  # Random speed in x direction
-                dy=random.uniform(-10, 10),  # Random speed in y direction
-                angle=random.uniform(0, 2 * math.pi)  # Random angle
-            ))
-
-    # Drawing function for circles
-    def draw_circles(self):
-        for obj in self.vec_asteroids:
-            pygame.draw.circle(self.screen, self.white, (int(obj.x), int(obj.y)), int(obj.n_size / 2))
-
-    # Colilisions
     def check_collisions(self):
         if self.game_over:
             return
 
         for asteroid in self.vec_asteroids:
-            distance = math.sqrt((self.player.x - asteroid.x)**2 + (self.player.y - asteroid.y)**2)
+            distance = math.sqrt((self.player.x - asteroid.x) ** 2 + (self.player.y - asteroid.y) ** 2)
             if distance < (self.player.n_size / 2 + asteroid.n_size / 2):
                 print("Game Over")
                 self.game_over = True
                 self.game_over_time = time.time()
 
-        for asteroid in self.vec_asteroids:
-            for bullet in self.vec_bullets:
-                distance = math.sqrt((bullet.x - asteroid.x)**2 + (bullet.y - asteroid.y)**2)
-                if distance < (asteroid.n_size / 2 + asteroid.n_size / 2):
+        for asteroid in self.vec_asteroids[:]:
+            for bullet in self.vec_bullets[:]:
+                distance = math.sqrt((bullet.x - asteroid.x) ** 2 + (bullet.y - asteroid.y) ** 2)
+                if distance < (asteroid.n_size / 2 + bullet.n_size / 2):
                     self.vec_asteroids.remove(asteroid)
+                    self.create_random_asteroids(num_asteroids=1)
+                    self.vec_bullets.remove(bullet)
 
-    # Main setup
     def run_game(self):
         clock = pygame.time.Clock()
-        self.create_random_circles(num_circles=5)
+        self.create_random_asteroids(num_asteroids=5)
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_F11:
-                        self.toggle_fullscreen()
 
             self.elapsed_time = 0.1
             self.handle_input()
@@ -211,14 +238,14 @@ class AsteroidsGame:
             self.draw_objects()
 
             if self.game_over:
-                if time.time() - self.game_over_time > 3:  # Zakończ grę po 3 sekundach
+                if time.time() - self.game_over_time > 3:
                     pygame.quit()
                     sys.exit()
                 self.screen.fill(self.black)
                 font = pygame.font.Font(None, 72)
                 game_over_text = font.render("Game Over", True, self.white)
-                self.screen.blit(game_over_text, (self.screen_width // 2 - 110, self.screen_height // 2 - 50))
-                
+                self.screen.blit(game_over_text, (self.screen_width // 2 - 100, self.screen_height // 2 - 20))
+
             pygame.display.flip()
             clock.tick(60)
 
