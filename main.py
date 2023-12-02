@@ -116,7 +116,7 @@ class AsteroidsGame:
     # Spawn asteroid
     def create_random_circles(self, num_circles):
         for _ in range(num_circles):
-            size = random.randint(10, 30)  # Random size between 10 and 30
+            size = random.randint(10, 30)  # Random size
             x = random.uniform(0, self.screen_width)  # Random x position
             y = random.uniform(0, self.screen_height)  # Random y position
 
@@ -126,7 +126,7 @@ class AsteroidsGame:
                 y=y,
                 dx=random.uniform(-10, 10),  # Random speed in x direction
                 dy=random.uniform(-10, 10),  # Random speed in y direction
-                angle=random.uniform(0, 2 * math.pi)  # Random initial angle
+                angle=random.uniform(0, 2 * math.pi)  # Random angle
             ))
 
     # Drawing function for circles
