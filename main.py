@@ -46,6 +46,8 @@ class AsteroidsGame:
         self.counter_shooting = 0
         self.game_over = False
         self.game_over_time = 0
+    def toggle_fullscreen(self):
+        pygame.display.toggle_fullscreen()    
 
     # Handle input
     def handle_input(self):
@@ -196,6 +198,9 @@ class AsteroidsGame:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_F11:
+                        self.toggle_fullscreen()
 
             self.elapsed_time = 0.1
             self.handle_input()
@@ -212,7 +217,7 @@ class AsteroidsGame:
                 self.screen.fill(self.black)
                 font = pygame.font.Font(None, 72)
                 game_over_text = font.render("Game Over", True, self.white)
-                self.screen.blit(game_over_text, (self.screen_width // 2 - 100, self.screen_height // 2 - 20))
+                self.screen.blit(game_over_text, (self.screen_width // 2 - 110, self.screen_height // 2 - 50))
                 
             pygame.display.flip()
             clock.tick(60)
