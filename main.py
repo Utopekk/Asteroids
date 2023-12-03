@@ -90,9 +90,6 @@ class AsteroidsGame:
 
         now = int(time.time())
         if keys[pygame.K_SPACE] and (now - self.last_time_shot) >= self.interval_shooting:
-            acceleration = 1
-            if (self.player.speed > 110):
-                acceleration += self.player.speed * 0.01
             self.vec_bullets.append(Bullet(
                 n_size=0,
                 x=self.player.x,
@@ -100,7 +97,7 @@ class AsteroidsGame:
                 dx=50.0 * math.sin(self.player.angle),
                 dy=-50.0 * math.cos(self.player.angle),
                 angle=0.0,
-                acceleration=acceleration
+                acceleration=1 + self.player.speed * 0.007
             ))
             self.last_time_shot = now
             self.counter_shooting += 1
@@ -109,8 +106,8 @@ class AsteroidsGame:
         self.vec_bullets = [b for b in self.vec_bullets if time.time() - b.creation_time <= 1.5]
 
         for bullet in self.vec_bullets:
-            bullet.x += bullet.dx * self.elapsed_time
-            bullet.y += bullet.dy * self.elapsed_time
+            bullet.x += bullet.dx * self.elapsed_time * bullet.acceleration
+            bullet.y += bullet.dy * self.elapsed_time * bullet.acceleration
             bullet.x, bullet.y = self.wrap(bullet.x, bullet.y)
 
         for asteroid in self.vec_asteroids:
@@ -125,8 +122,8 @@ class AsteroidsGame:
     def draw_objects(self):
         self.draw_asteroids()
         for bullet in self.vec_bullets:
-            bullet.x += bullet.dx * self.elapsed_time
-            bullet.y += bullet.dy * self.elapsed_time
+            bullet.x += bullet.dx * self.elapsed_time * bullet.acceleration
+            bullet.y += bullet.dy * self.elapsed_time * bullet.acceleration
             bullet.x, bullet.y = self.wrap(bullet.x, bullet.y)
             pygame.draw.rect(self.screen, self.white, pygame.Rect(bullet.x, bullet.y, 5, 5))
 
@@ -205,19 +202,34 @@ class AsteroidsGame:
         if self.game_over:
             return
 
+        # Create a bounding box (hitbox) around the rotated and translated vertices of the player
+        player_rotated_vertices = self.rotate_vertices([(0, -24), (-10, 10), (10, 10)], self.player.angle)
+        min_x_player = min(x for x, y in player_rotated_vertices)
+        min_y_player = min(y for x, y in player_rotated_vertices)
+        max_x_player = max(x for x, y in player_rotated_vertices)
+        max_y_player = max(y for x, y in player_rotated_vertices)
+        player_rect = pygame.Rect(min_x_player + self.player.x, min_y_player + self.player.y, max_x_player - min_x_player, max_y_player - min_y_player)
+
         for asteroid in self.vec_asteroids:
-            distance = math.sqrt((self.player.x - asteroid.x) ** 2 + (self.player.y - asteroid.y) ** 2)
-            if distance < (self.player.n_size / 2 + asteroid.n_size / 2):
+            # Create a bounding box (hitbox) around the rotated and translated vertices of the asteroid
+            rotated_vertices = self.rotate_vertices(asteroid.vertices, asteroid.angle)
+            min_x = min(x for x, y in rotated_vertices)
+            min_y = min(y for x, y in rotated_vertices)
+            max_x = max(x for x, y in rotated_vertices)
+            max_y = max(y for x, y in rotated_vertices)
+            asteroid_rect = pygame.Rect(min_x + asteroid.x, min_y + asteroid.y, max_x - min_x, max_y - min_y)
+
+            # Check collision between player and asteroid hitbox
+            if player_rect.colliderect(asteroid_rect):
                 print("Game Over")
                 self.game_over = True
                 self.game_over_time = time.time()
 
-        for asteroid in self.vec_asteroids[:]:
+            # Check collision between bullets and asteroid hitbox
             for bullet in self.vec_bullets[:]:
-                distance = math.sqrt((bullet.x - asteroid.x) ** 2 + (bullet.y - asteroid.y) ** 2)
-                if distance < (asteroid.n_size / 2 + bullet.n_size / 2):
+                bullet_rect = pygame.Rect(bullet.x, bullet.y, 5, 5)
+                if asteroid_rect.colliderect(bullet_rect):
                     self.vec_asteroids.remove(asteroid)
-                    self.create_random_asteroids(num_asteroids=1)
                     self.vec_bullets.remove(bullet)
 
     def run_game(self):
