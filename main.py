@@ -3,7 +3,6 @@ import sys
 import math
 import time
 import random
-
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -229,7 +228,30 @@ class AsteroidsGame:
 
     def draw_player_ship(self):
         vertices = self.player.calculate_firing_position()
+
         pygame.draw.polygon(self.screen, RED, vertices)
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_UP]:
+            flame_vertices = self.calculate_flame_vertices()
+            pygame.draw.polygon(self.screen, (255, 165, 0), flame_vertices)
+
+    def calculate_flame_vertices(self):
+        flame_length = 40
+        flame_width = 20
+        flame_vertices = [
+            (0, flame_length),
+            (-flame_width / 2, 20),
+            (flame_width / 2, 20)
+        ]
+
+        rotated_flame_vertices = rotate_vertices(flame_vertices, self.player.angle)
+
+        translated_flame_vertices = [
+            (x + self.player.x, y + self.player.y) for x, y in rotated_flame_vertices
+        ]
+
+        return translated_flame_vertices
 
     def check_collisions(self):
         if self.game_over:
