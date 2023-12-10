@@ -3,6 +3,7 @@ import sys
 import math
 import time
 import random
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -55,6 +56,49 @@ class Bullet(SpaceObject):
         self.acceleration = acceleration
 
 
+class Enemy(SpaceObject):
+    def __init__(self, screen, x, y, dx, dy, angle, shooting_interval=3.0):
+        super().__init__(n_size=20.0, x=x, y=y, dx=dx, dy=dy, angle=angle)
+        self.screen = screen
+        self.shooting_interval = shooting_interval
+        self.last_time_shot = 0
+
+    def draw_enemy(self):
+        pygame.draw.rect(self.screen, (0, 255, 0), pygame.Rect(self.x, self.y, 20, 20))
+
+    def shoot_bullet(self):
+        bullet_speed = 10.0  # Adjust the speed of the bullet as needed
+        bullet_direction = math.atan2(self.dy, self.dx)  # Use the direction of the enemy's movement
+        bullet = EnemyBullet(
+            n_size=0,
+            x=self.x,
+            y=self.y,
+            dx=bullet_speed * math.cos(bullet_direction),
+            dy=bullet_speed * math.sin(bullet_direction),
+            angle=bullet_direction,
+            acceleration=1
+        )
+        return bullet
+
+    def update(self, player_x, player_y):
+        # Adjust the enemy's position based on the player's position
+        angle_to_player = math.atan2(player_y - self.y, player_x - self.x)
+        self.dx = math.cos(angle_to_player) * 10  # Adjust the speed as needed
+        self.dy = math.sin(angle_to_player) * 10  # Adjust the speed as needed
+
+        now = time.time()
+        if now - self.last_time_shot >= self.shooting_interval:
+            bullet = self.shoot_bullet()
+            self.last_time_shot = now
+            return bullet
+
+
+class EnemyBullet(SpaceObject):
+    def __init__(self, n_size, x, y, dx, dy, angle, acceleration):
+        super().__init__(n_size, x, y, dx, dy, angle)
+        self.acceleration = acceleration
+
+
 def generate_irregular_shape(size):
     num_vertices = random.randint(5, 10)
     angle_increment = 2 * math.pi / num_vertices
@@ -93,6 +137,7 @@ class AsteroidsGame:
         self.counter_shooting = 0
         self.game_over = False
         self.game_over_time = 0
+        self.enemy = None
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -161,6 +206,16 @@ class AsteroidsGame:
         self.player.y += self.player.dy * self.elapsed_time
         self.player.x, self.player.y = self.wrap(self.player.x, self.player.y)
 
+        if hasattr(self, 'enemy'):
+            self.enemy.x += self.enemy.dx * self.elapsed_time
+            self.enemy.y += self.enemy.dy * self.elapsed_time
+            self.enemy.x, self.enemy.y = self.wrap(self.enemy.x, self.enemy.y)
+
+            # Enemy shooting logic
+            enemy_bullet = self.enemy.update(self.player.x, self.player.y)
+            if enemy_bullet:
+                self.vec_bullets.append(enemy_bullet)
+
     def draw_objects(self):
         self.draw_asteroids()
         for bullet in self.vec_bullets:
@@ -170,6 +225,8 @@ class AsteroidsGame:
             pygame.draw.rect(self.screen, WHITE, pygame.Rect(bullet.x, bullet.y, 5, 5))
 
         self.draw_player_ship()
+        if hasattr(self, 'enemy'):
+            self.enemy.draw_enemy()
 
     def wrap(self, ix, iy):
         ox, oy = ix, iy
@@ -253,18 +310,32 @@ class AsteroidsGame:
 
         return translated_flame_vertices
 
+    def create_enemy(self):
+        x = random.uniform(0, self.screen_width)
+        y = random.uniform(0, self.screen_height)
+
+        # Ensure the enemy is not too close to the player
+        while (
+                self.player.x + 150 < x < self.player.x - 150 or
+                self.player.y + 150 < y < self.player.y - 150
+        ):
+            x = random.uniform(0, self.screen_width)
+            y = random.uniform(0, self.screen_height)
+
+        self.enemy = Enemy(screen=self.screen, x=x, y=y, dx=0, dy=0, angle=0)
+
     def check_collisions(self):
         if self.game_over:
             return
 
-        # Create a bounding box (hitbox) around the rotated and translated vertices of the player
-        player_rotated_vertices = rotate_vertices([(0, -24), (-10, 10), (10, 10)], self.player.angle)
-        min_x_player = min(x for x, y in player_rotated_vertices)
-        min_y_player = min(y for x, y in player_rotated_vertices)
-        max_x_player = max(x for x, y in player_rotated_vertices)
-        max_y_player = max(y for x, y in player_rotated_vertices)
-        player_rect = pygame.Rect(min_x_player + self.player.x, min_y_player + self.player.y,
-                                  max_x_player - min_x_player, max_y_player - min_y_player)
+        # Check collision between player and enemy bullets
+        player_rect = pygame.Rect(self.player.x - 10, self.player.y - 24, 20, 34)  # Adjust hitbox as needed
+        for enemy_bullet in self.vec_bullets[:]:
+            enemy_bullet_rect = pygame.Rect(enemy_bullet.x, enemy_bullet.y, 5, 5)
+            if player_rect.colliderect(enemy_bullet_rect):
+                print("Game Over (Hit by enemy bullet)")
+                self.game_over = True
+                self.game_over_time = time.time()
 
         for asteroid in self.vec_huge_asteroids:
             # Create a bounding box (hitbox) around the rotated and translated vertices of the asteroid
@@ -338,6 +409,7 @@ class AsteroidsGame:
         clock = pygame.time.Clock()
         self.create_random_huge_asteroids(num_asteroids=3)
         self.create_random_small_asteroids(num_asteroids=2)
+        self.create_enemy()
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -350,6 +422,12 @@ class AsteroidsGame:
             self.elapsed_time = 0.1
             self.handle_input()
             self.update_objects()
+
+            if hasattr(self, 'enemy'):
+                enemy_bullet = self.enemy.update(self.player.x, self.player.y)
+                if enemy_bullet:
+                    self.vec_bullets.append(enemy_bullet)
+
             self.check_collisions()
             font = pygame.font.Font(None, 48)
             score = font.render("Score: " + str(self.player.score), True, BLUE)
