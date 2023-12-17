@@ -1,103 +1,14 @@
-import pygame
 import sys
-import math
-import time
 import random
+from Bullet import *
+from Asteroid import *
+from Player import *
+from Enemy import *
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
-
-
-class SpaceObject:
-    def __init__(self, n_size, x, y, dx, dy, angle, vertices=None):
-        self.n_size = n_size
-        self.x = x
-        self.y = y
-        self.dx = dx
-        self.dy = dy
-        self.angle = angle
-        self.creation_time = time.time()
-        self.vertices = vertices
-
-
-class Player(SpaceObject):
-    def __init__(self, n_size, x, y, dx, dy, angle, lives=3):
-        super().__init__(n_size, x, y, dx, dy, angle)
-        self.acceleration = 0.1
-        self.speed = 10
-        self.score = 0
-        self.lives = lives
-
-    def calculate_vertices(self, mx, my):
-        vertices = []
-        for i in range(3):
-            vertices.append((
-                mx[i] * math.cos(self.angle) - my[i] * math.sin(self.angle) + self.x,
-                mx[i] * math.sin(self.angle) + my[i] * math.cos(self.angle) + self.y
-            ))
-        return vertices
-
-    def calculate_firing_position(self):
-        mx = [0.0, -20.0, 20.0]
-        my = [-44.0, 20.0, 20.0]
-        return self.calculate_vertices(mx, my)
-
-
-class Asteroid(SpaceObject):
-    def __init__(self, n_size, x, y, dx, dy, angle, vertices):
-        super().__init__(n_size, x, y, dx, dy, angle)
-        self.vertices = vertices
-
-
-class Bullet(SpaceObject):
-    def __init__(self, n_size, x, y, dx, dy, angle, acceleration):
-        super().__init__(n_size, x, y, dx, dy, angle)
-        self.acceleration = acceleration
-
-
-class Enemy(SpaceObject):
-    def __init__(self, screen, x, y, dx, dy, angle, shooting_interval=3.0):
-        super().__init__(n_size=20.0, x=x, y=y, dx=dx, dy=dy, angle=angle)
-        self.screen = screen
-        self.shooting_interval = shooting_interval
-        self.last_time_shot = 0
-
-    def draw_enemy(self):
-        pygame.draw.rect(self.screen, (0, 255, 0), pygame.Rect(self.x, self.y, 30, 30))
-
-    def shoot_bullet(self):
-        bullet_speed = 10.0  # Adjust the speed of the bullet as needed
-        bullet_direction = math.atan2(self.dy, self.dx)  # Use the direction of the enemy's movement
-        bullet = EnemyBullet(
-            n_size=0,
-            x=self.x,
-            y=self.y,
-            dx=bullet_speed * math.cos(bullet_direction),
-            dy=bullet_speed * math.sin(bullet_direction),
-            angle=bullet_direction,
-            acceleration=1
-        )
-        return bullet
-
-    def update(self, player_x, player_y):
-        # Adjust the enemy's position based on the player's position
-        angle_to_player = math.atan2(player_y - self.y, player_x - self.x)
-        self.dx = math.cos(angle_to_player) * 10  # Adjust the speed as needed
-        self.dy = math.sin(angle_to_player) * 10  # Adjust the speed as needed
-
-        now = time.time()
-        if now - self.last_time_shot >= self.shooting_interval:
-            bullet = self.shoot_bullet()
-            self.last_time_shot = now
-            return bullet
-
-
-class EnemyBullet(SpaceObject):
-    def __init__(self, n_size, x, y, dx, dy, angle, acceleration):
-        super().__init__(n_size, x, y, dx, dy, angle)
-        self.acceleration = acceleration
 
 
 def generate_irregular_shape(size):
@@ -338,93 +249,107 @@ class AsteroidsGame:
 
         self.enemy = Enemy(screen=self.screen, x=x, y=y, dx=0, dy=0, angle=0)
 
+    def check_player_huge_asteroid_collision(self, player_rect):
+        for asteroid in self.vec_huge_asteroids[:]:
+            asteroid_rect = self.get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
+
+            if player_rect.colliderect(asteroid_rect):
+                self.handle_player_asteroid_collision(asteroid)
+
+    def check_player_small_asteroid_collision(self, player_rect):
+        for asteroid in self.vec_small_asteroids[:]:
+            asteroid_rect = self.get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
+
+            if player_rect.colliderect(asteroid_rect):
+                self.handle_player_asteroid_collision(asteroid)
+
+    def check_player_enemy_bullet_collision(self, player_rect):
+        for enemy_bullet in self.vec_bullets[:]:
+            enemy_bullet_rect = pygame.Rect(enemy_bullet.x, enemy_bullet.y, 5, 5)
+            if player_rect.colliderect(enemy_bullet_rect):
+                self.handle_game_over("Hit by enemy bullet")
+
+    def get_rotated_rect(self, vertices, angle, x, y):
+        rotated_vertices = rotate_vertices(vertices, angle)
+        min_x = min(x for x, y in rotated_vertices)
+        min_y = min(y for x, y in rotated_vertices)
+        max_x = max(x for x, y in rotated_vertices)
+        max_y = max(y for x, y in rotated_vertices)
+        return pygame.Rect(min_x + x, min_y + y, max_x - min_x, max_y - min_y)
+
+    def handle_player_asteroid_collision(self, asteroid):
+        print(f"Hit by {'huge' if asteroid in self.vec_huge_asteroids else 'small'} asteroid")
+        self.vec_huge_asteroids.remove(
+            asteroid) if asteroid in self.vec_huge_asteroids else self.vec_small_asteroids.remove(asteroid)
+        self.player.lives -= 1
+        if self.player.lives <= 0:
+            self.handle_game_over("Game Over")
+
+    def check_bullet_asteroid_collisions(self):
+        for bullet in self.vec_bullets[:]:
+            bullet_rect = pygame.Rect(bullet.x, bullet.y, 5, 5)
+
+            for asteroid in self.vec_huge_asteroids[:]:
+                asteroid_rect = self.get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
+
+                if bullet_rect.colliderect(asteroid_rect):
+                    self.handle_bullet_asteroid_collision(bullet, asteroid)
+
+            for asteroid in self.vec_small_asteroids[:]:
+                asteroid_rect = self.get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
+
+                if bullet_rect.colliderect(asteroid_rect):
+                    self.handle_bullet_asteroid_collision(bullet, asteroid)
+
+    def handle_bullet_asteroid_collision(self, bullet, asteroid):
+        print(f"Bullet hit {'huge' if asteroid in self.vec_huge_asteroids else 'small'} asteroid")
+        self.vec_bullets.remove(bullet)
+        if asteroid in self.vec_huge_asteroids:
+            self.split_asteroid(asteroid)
+        else:
+            self.vec_small_asteroids.remove(asteroid)
+
+    def handle_game_over(self, reason):
+        print(reason)
+        self.game_over = True
+        self.game_over_time = time.time()
+
     def check_collisions(self):
         if self.game_over:
             return
 
-        # Check collision between player and enemy bullets
-        player_rect = pygame.Rect(self.player.x - 10, self.player.y - 24, 20, 34)  # Adjust hitbox as needed
-        for enemy_bullet in self.vec_bullets[:]:
-            enemy_bullet_rect = pygame.Rect(enemy_bullet.x, enemy_bullet.y, 5, 5)
-            if player_rect.colliderect(enemy_bullet_rect):
-                print("Game Over (Hit by enemy bullet)")
-                self.game_over = True
-                self.game_over_time = time.time()
+        player_rect = pygame.Rect(self.player.x - 10, self.player.y - 24, 20, 34)
 
-        player_rect = pygame.Rect(self.player.x - 10, self.player.y - 24, 20, 34)  # Adjust hitbox as needed
+        self.check_player_huge_asteroid_collision(player_rect)
+        self.check_player_small_asteroid_collision(player_rect)
+        self.check_player_enemy_bullet_collision(player_rect)
 
-        huge_asteroids_to_remove = []  # List to store huge asteroids that will be removed
-        small_asteroids_to_add = []  # List to store new small asteroids
+        # Check bullet-asteroid collisions
+        self.check_bullet_asteroid_collisions()
 
-        for asteroid in self.vec_huge_asteroids:
-            rotated_vertices = rotate_vertices(asteroid.vertices, asteroid.angle)
-            min_x = min(x for x, y in rotated_vertices)
-            min_y = min(y for x, y in rotated_vertices)
-            max_x = max(x for x, y in rotated_vertices)
-            max_y = max(y for x, y in rotated_vertices)
-            asteroid_rect = pygame.Rect(min_x + asteroid.x, min_y + asteroid.y, max_x - min_x, max_y - min_y)
-
-            if player_rect.colliderect(asteroid_rect):
-                print("Hit by huge asteroid")
-                huge_asteroids_to_remove.append(asteroid)
-                self.player.lives -= 1
-                if self.player.lives <= 0:
-                    print("Game Over")
-                    self.game_over = True
-                    self.game_over_time = time.time()
-
-        for asteroid in self.vec_small_asteroids[:]:
-            rotated_vertices = rotate_vertices(asteroid.vertices, asteroid.angle)
-            min_x = min(x for x, y in rotated_vertices)
-            min_y = min(y for x, y in rotated_vertices)
-            max_x = max(x for x, y in rotated_vertices)
-            max_y = max(y for x, y in rotated_vertices)
-            asteroid_rect = pygame.Rect(min_x + asteroid.x, min_y + asteroid.y, max_x - min_x, max_y - min_y)
-
-            # Check collision between player and asteroid hitbox
-            if player_rect.colliderect(asteroid_rect) and asteroid not in huge_asteroids_to_remove:
-                print("Hit by small asteroid")
-                self.vec_small_asteroids.remove(asteroid)
-                self.player.lives -= 1
-                if self.player.lives <= 0:
-                    print("Game Over")
-                    self.game_over = True
-                    self.game_over_time = time.time()
-
-            # Check collision between bullets and asteroid hitbox
-            for bullet in self.vec_bullets[:]:
-                bullet_rect = pygame.Rect(bullet.x, bullet.y, 5, 5)
-                if asteroid_rect.colliderect(bullet_rect):
-                    self.vec_bullets.remove(bullet)
-                    huge_asteroids_to_remove.append(asteroid)
-
-                    # Divide the huge asteroid into two even smaller asteroids
-                    x = asteroid.x
-                    y = asteroid.y
-                    small_asteroids_to_add.append(Asteroid(
-                        n_size=random.randint(5, 12),
-                        x=x + random.uniform(-10, 10),
-                        y=y + random.uniform(-10, 10),
-                        dx=random.uniform(-10, 10),
-                        dy=random.uniform(-10, 10),
-                        angle=random.uniform(0, 2 * math.pi),
-                        vertices=generate_irregular_shape(random.randint(5, 12))
-                    ))
-                    small_asteroids_to_add.append(Asteroid(
-                        n_size=random.randint(5, 12),
-                        x=x + random.uniform(-10, 10),
-                        y=y + random.uniform(-10, 10),
-                        dx=random.uniform(-10, 10),
-                        dy=random.uniform(-10, 10),
-                        angle=random.uniform(0, 2 * math.pi),
-                        vertices=generate_irregular_shape(random.randint(5, 12))
-                    ))
-                    self.player.score += 50
-
-        for asteroid in huge_asteroids_to_remove:
-            self.vec_huge_asteroids.remove(asteroid)
-
-        self.vec_small_asteroids.extend(small_asteroids_to_add)
+    def split_asteroid(self, asteroid):
+        # Divide the asteroid into two even smaller asteroids
+        x = asteroid.x
+        y = asteroid.y
+        self.vec_small_asteroids.append(Asteroid(
+            n_size=random.randint(5, 12),
+            x=x + random.uniform(-10, 10),
+            y=y + random.uniform(-10, 10),
+            dx=random.uniform(-10, 10),
+            dy=random.uniform(-10, 10),
+            angle=random.uniform(0, 2 * math.pi),
+            vertices=generate_irregular_shape(random.randint(5, 12))
+        ))
+        self.vec_small_asteroids.append(Asteroid(
+            n_size=random.randint(5, 12),
+            x=x + random.uniform(-10, 10),
+            y=y + random.uniform(-10, 10),
+            dx=random.uniform(-10, 10),
+            dy=random.uniform(-10, 10),
+            angle=random.uniform(0, 2 * math.pi),
+            vertices=generate_irregular_shape(random.randint(5, 12))
+        ))
+        self.vec_huge_asteroids.remove(asteroid)
 
     def run_game(self):
         clock = pygame.time.Clock()
