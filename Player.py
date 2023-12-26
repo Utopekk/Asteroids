@@ -7,7 +7,6 @@ class Player(SpaceObject):
         super().__init__(n_size, x, y, dx, dy, angle)
         self.acceleration = 0.1
         self.speed = 10
-        self.score = 0
         self.lives = lives
 
     def calculate_vertices(self, mx, my):
