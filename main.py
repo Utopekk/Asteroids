@@ -6,6 +6,8 @@ from Player import *
 from Enemy import *
 from Settings import *
 
+N = 4
+
 
 def generate_irregular_shape(size):
     num_vertices = random.randint(5, 10)
@@ -191,13 +193,12 @@ class AsteroidsGame:
             x = random.uniform(-WIDTH, WIDTH)
             y = random.uniform(-HEIGHT, HEIGHT)
 
-            # Ensure asteroids are not created too close to the player
             while (
-                    self.player.x + 250 < x < self.player.x - 250 or
-                    self.player.y + 250 < y < self.player.y - 250
+                    self.player.x + 950 > x > self.player.x - 950 and
+                    self.player.y + 950 > y > self.player.y - 950
             ):
                 x = random.uniform(-WIDTH, WIDTH)
-                y = random.uniform(-WIDTH, WIDTH)
+                y = random.uniform(-HEIGHT, HEIGHT)
 
             vertices = generate_irregular_shape(size)
             asteroids.append(Asteroid(
@@ -299,9 +300,20 @@ class AsteroidsGame:
             self.remove_asteroid(asteroid)
         elif asteroid in self.vec_small_asteroids:
             self.vec_small_asteroids.remove(asteroid)
+
         self.player.lives -= 1
-        if self.player.lives <= 0:
+
+        if self.player.lives > 0:
+            self.player.x = WIDTH / 2.0
+            self.player.y = HEIGHT / 2.0
+            self.player.angle = 0.0
+            self.player.dx = 0.0
+            self.player.dy = 0.0
+        else:
             self.handle_game_over("Game Over")
+
+        if not (self.vec_huge_asteroids or self.vec_medium_asteroids or self.vec_small_asteroids):
+            self.create_random_huge_asteroids(num_asteroids=N)
 
     def check_bullet_asteroid_collisions(self):
         bullets_to_remove = []
@@ -342,15 +354,17 @@ class AsteroidsGame:
                         bullets_to_remove.append(bullet)
                     break
 
-        # Remove bullets after the iteration
         for bullet in bullets_to_remove:
             self.vec_bullets.remove(bullet)
 
-    def handle_bullet_asteroid_collision(self, asteroid):
+    def handle_bullet_asteroid_collision(self, asteroid, num=N):
         self.score += 100
-
         if asteroid in self.vec_huge_asteroids:
             self.vec_huge_asteroids.remove(asteroid)
+            if not self.vec_huge_asteroids and not self.vec_medium_asteroids and not self.vec_small_asteroids:
+                num += 1
+                self.create_random_huge_asteroids(num_asteroids=num)
+
             medium_asteroid_1 = Asteroid(
                 n_size=random.randint(15, 26),
                 x=asteroid.x + random.uniform(-10, 10),
@@ -377,7 +391,11 @@ class AsteroidsGame:
         elif asteroid in self.vec_small_asteroids:
             self.vec_small_asteroids.remove(asteroid)
 
-        return True  # Signal that the bullet should be removed
+        if not (self.vec_huge_asteroids or self.vec_medium_asteroids or self.vec_small_asteroids):
+            num *= 2
+            self.create_random_huge_asteroids(num_asteroids=num)
+
+        return True
 
     def handle_game_over(self, reason):
         print(reason)
@@ -419,8 +437,8 @@ class AsteroidsGame:
 
     def run_game(self):
         clock = pygame.time.Clock()
-        self.create_random_huge_asteroids(num_asteroids=4)
-        # self.create_enemy()
+        self.create_random_huge_asteroids(num_asteroids=N)
+
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -434,11 +452,6 @@ class AsteroidsGame:
             self.handle_input()
             self.update_objects()
 
-            """if hasattr(self, 'enemy'):
-                enemy_bullet = self.enemy.update(self.player.x, self.player.y)
-                if enemy_bullet:
-                    self.vec_bullets.append(enemy_bullet)
-            """
             self.check_collisions()
             font = pygame.font.Font(None, 48)
             score = font.render("Score: " + str(self.score), True, BLUE)

@@ -7,3 +7,5 @@ BLUE = (0, 0, 255)
 # Screen
 WIDTH = 1280
 HEIGHT = 720
+
+
