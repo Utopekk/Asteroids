@@ -366,22 +366,22 @@ class AsteroidsGame:
                 self.create_random_huge_asteroids(num_asteroids=num)
 
             medium_asteroid_1 = Asteroid(
-                n_size=random.randint(15, 26),
+                n_size=random.randint(18, 30),
                 x=asteroid.x + random.uniform(-10, 10),
                 y=asteroid.y + random.uniform(-10, 10),
                 dx=random.uniform(-10, 10),
                 dy=random.uniform(-10, 10),
                 angle=random.uniform(0, 2 * math.pi),
-                vertices=generate_irregular_shape(random.randint(15, 26))
+                vertices=generate_irregular_shape(random.randint(28, 35))
             )
             medium_asteroid_2 = Asteroid(
-                n_size=random.randint(15, 26),
+                n_size=random.randint(18, 30),
                 x=asteroid.x + random.uniform(-10, 10),
                 y=asteroid.y + random.uniform(-10, 10),
                 dx=random.uniform(-10, 10),
                 dy=random.uniform(-10, 10),
                 angle=random.uniform(0, 2 * math.pi),
-                vertices=generate_irregular_shape(random.randint(15, 26))
+                vertices=generate_irregular_shape(random.randint(28, 35))
             )
             self.vec_medium_asteroids.extend([medium_asteroid_1, medium_asteroid_2])
 
@@ -416,22 +416,22 @@ class AsteroidsGame:
     def remove_asteroid(self, asteroid):
         self.vec_medium_asteroids.remove(asteroid)
         small_asteroid_1 = Asteroid(
-            n_size=random.randint(5, 12),
-            x=asteroid.x + random.uniform(-10, 10),
-            y=asteroid.y + random.uniform(-10, 10),
+            n_size=random.randint(12, 25),
+            x=asteroid.x + random.uniform(-20, 20),
+            y=asteroid.y + random.uniform(-20, 20),
             dx=random.uniform(-10, 10),
             dy=random.uniform(-10, 10),
             angle=random.uniform(0, 2 * math.pi),
-            vertices=generate_irregular_shape(random.randint(5, 12))
+            vertices=generate_irregular_shape(random.randint(15, 20))
         )
         small_asteroid_2 = Asteroid(
-            n_size=random.randint(5, 12),
-            x=asteroid.x + random.uniform(-10, 10),
-            y=asteroid.y + random.uniform(-10, 10),
+            n_size=random.randint(12, 25),
+            x=asteroid.x + random.uniform(-20, 20),
+            y=asteroid.y + random.uniform(-20, 20),
             dx=random.uniform(-10, 10),
             dy=random.uniform(-10, 10),
             angle=random.uniform(0, 2 * math.pi),
-            vertices=generate_irregular_shape(random.randint(5, 12))
+            vertices=generate_irregular_shape(random.randint(15, 20))
         )
         self.vec_small_asteroids.extend([small_asteroid_1, small_asteroid_2])
 
