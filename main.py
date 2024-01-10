@@ -62,7 +62,7 @@ class AsteroidsGame:
         self.vec_medium_asteroids = []
         self.vec_small_asteroids = []
         self.vec_bullets = []
-        self.interval_shooting = 1
+        self.interval_shooting = 0.75
         self.last_time_shot = 0
         self.counter_shooting = 0
         self.game_over = False
@@ -112,7 +112,7 @@ class AsteroidsGame:
             self.player.speed = math.sqrt(self.player.dx ** 2 + self.player.dy ** 2)
 
         firing_position = self.player.calculate_firing_position()
-        now = int(time.time())
+        now = float(time.time())
         if keys[pygame.K_SPACE] and (now - self.last_time_shot) >= self.interval_shooting:
             self.vec_bullets.append(Bullet(
                 n_size=0,
@@ -127,7 +127,7 @@ class AsteroidsGame:
             self.counter_shooting += 1
 
     def update_objects(self):
-        self.vec_bullets = [b for b in self.vec_bullets if time.time() - b.creation_time <= 1.5]
+        self.vec_bullets = [b for b in self.vec_bullets if time.time() - b.creation_time <= 1]
 
         for bullet in self.vec_bullets:
             bullet.x += bullet.dx * self.elapsed_time * bullet.acceleration
@@ -417,8 +417,8 @@ class AsteroidsGame:
         self.vec_medium_asteroids.remove(asteroid)
         small_asteroid_1 = Asteroid(
             n_size=random.randint(12, 25),
-            x=asteroid.x + random.uniform(-20, 20),
-            y=asteroid.y + random.uniform(-20, 20),
+            x=asteroid.x + random.uniform(-10, 10),
+            y=asteroid.y + random.uniform(-10, 10),
             dx=random.uniform(-10, 10),
             dy=random.uniform(-10, 10),
             angle=random.uniform(0, 2 * math.pi),
@@ -426,8 +426,8 @@ class AsteroidsGame:
         )
         small_asteroid_2 = Asteroid(
             n_size=random.randint(12, 25),
-            x=asteroid.x + random.uniform(-20, 20),
-            y=asteroid.y + random.uniform(-20, 20),
+            x=asteroid.x + random.uniform(-10, 10),
+            y=asteroid.y + random.uniform(-10, 10),
             dx=random.uniform(-10, 10),
             dy=random.uniform(-10, 10),
             angle=random.uniform(0, 2 * math.pi),
