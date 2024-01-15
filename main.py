@@ -73,15 +73,17 @@ class AsteroidsGame:
                              lives=3)
 
     def draw_life_icons(self):
-        heart_icon = pygame.image.load("heartt.png")
-        icon_width, icon_height = 40, 40
+        icon_width, icon_height = 40, 60
         spacing = 10
+        player_color = RED
 
         for i in range(self.player.lives):
             x = WIDTH - (i + 1) * (icon_width + spacing)
             y = spacing
-            resized_heart = pygame.transform.scale(heart_icon, (icon_width, icon_height))
-            self.screen.blit(resized_heart, (x, y))
+
+            # Draw a triangle representing the player ship
+            vertices = [(x, y + icon_height), (x + icon_width, y + icon_height), (x + icon_width / 2, y)]
+            pygame.draw.polygon(self.screen, player_color, vertices)
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -165,6 +167,7 @@ class AsteroidsGame:
 
     def draw_objects(self):
         self.draw_asteroids()
+
         for bullet in self.vec_bullets:
             bullet.x += bullet.dx * self.elapsed_time * bullet.acceleration
             bullet.y += bullet.dy * self.elapsed_time * bullet.acceleration
@@ -182,6 +185,10 @@ class AsteroidsGame:
             pygame.draw.polygon(self.screen, WHITE, translated_vertices)
 
         self.draw_player_ship()
+        self.draw_life_icons()
+
+        pygame.display.flip()
+
         """if hasattr(self, 'enemy'):
             self.enemy.draw_enemy()"""
 
@@ -369,8 +376,8 @@ class AsteroidsGame:
                 n_size=random.randint(18, 30),
                 x=asteroid.x + random.uniform(-10, 10),
                 y=asteroid.y + random.uniform(-10, 10),
-                dx=random.uniform(-10, 10),
-                dy=random.uniform(-10, 10),
+                dx=random.uniform(-25, 25),
+                dy=random.uniform(-25, 25),
                 angle=random.uniform(0, 2 * math.pi),
                 vertices=generate_irregular_shape(random.randint(28, 35))
             )
@@ -378,8 +385,8 @@ class AsteroidsGame:
                 n_size=random.randint(18, 30),
                 x=asteroid.x + random.uniform(-10, 10),
                 y=asteroid.y + random.uniform(-10, 10),
-                dx=random.uniform(-10, 10),
-                dy=random.uniform(-10, 10),
+                dx=random.uniform(-25, 25),
+                dy=random.uniform(-25, 25),
                 angle=random.uniform(0, 2 * math.pi),
                 vertices=generate_irregular_shape(random.randint(28, 35))
             )
@@ -419,8 +426,8 @@ class AsteroidsGame:
             n_size=random.randint(12, 25),
             x=asteroid.x + random.uniform(-10, 10),
             y=asteroid.y + random.uniform(-10, 10),
-            dx=random.uniform(-10, 10),
-            dy=random.uniform(-10, 10),
+            dx=random.uniform(-25, 25),
+            dy=random.uniform(-25, 25),
             angle=random.uniform(0, 2 * math.pi),
             vertices=generate_irregular_shape(random.randint(15, 20))
         )
@@ -428,8 +435,8 @@ class AsteroidsGame:
             n_size=random.randint(12, 25),
             x=asteroid.x + random.uniform(-10, 10),
             y=asteroid.y + random.uniform(-10, 10),
-            dx=random.uniform(-10, 10),
-            dy=random.uniform(-10, 10),
+            dx=random.uniform(-25, 25),
+            dy=random.uniform(-25, 25),
             angle=random.uniform(0, 2 * math.pi),
             vertices=generate_irregular_shape(random.randint(15, 20))
         )
