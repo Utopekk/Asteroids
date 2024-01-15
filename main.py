@@ -446,38 +446,41 @@ class AsteroidsGame:
         clock = pygame.time.Clock()
         self.create_random_huge_asteroids(num_asteroids=N)
 
-        while True:
+        game_running = True
+
+        while game_running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_F11:
-                        pygame.display.toggle_fullscreen()
+                    game_running = False
 
-            self.elapsed_time = 0.1
-            self.handle_input()
-            self.update_objects()
+            if not self.game_over:
+                self.elapsed_time = 0.1
+                self.handle_input()
+                self.update_objects()
+                self.check_collisions()
 
-            self.check_collisions()
-            font = pygame.font.Font(None, 48)
-            score = font.render("Score: " + str(self.score), True, BLUE)
-            self.screen.fill(BLACK)
-            self.draw_life_icons()
-            self.screen.blit(score, (30, 30))
-            self.draw_objects()
+            if not self.game_over:
+                font = pygame.font.Font(None, 48)
+                score = font.render("Score: " + str(self.score), True, BLUE)
+                self.screen.fill(BLACK)
+                self.draw_life_icons()
+                self.screen.blit(score, (30, 30))
+                self.draw_objects()
 
             if self.game_over:
                 if time.time() - self.game_over_time > 3:
-                    pygame.quit()
-                    sys.exit()
-                self.screen.fill(BLACK)
-                font = pygame.font.Font(None, 72)
-                game_over_text = font.render("Game Over", True, WHITE)
-                self.screen.blit(game_over_text, (WIDTH // 2 - 132, HEIGHT // 2 - 40))
+                    game_running = False
+                else:
+                    self.screen.fill(BLACK)
+                    font = pygame.font.Font(None, 72)
+                    game_over_text = font.render("Game Over", True, WHITE)
+                    self.screen.blit(game_over_text, (WIDTH // 2 - 132, HEIGHT // 2 - 40))
 
             pygame.display.flip()
             clock.tick(60)
+
+        pygame.quit()
+        sys.exit()
 
 
 if __name__ == "__main__":
