@@ -52,6 +52,32 @@ def get_rotated_rect(vertices, angle, x, y):
     return pygame.Rect(min_x + x, min_y + y, max_x - min_x, max_y - min_y)
 
 
+def med_asteroids(asteroid):
+    medium_asteroids = Asteroid(
+        n_size=random.randint(18, 30),
+        x=asteroid.x + random.uniform(-10, 10),
+        y=asteroid.y + random.uniform(-10, 10),
+        dx=random.uniform(-25, 25),
+        dy=random.uniform(-25, 25),
+        angle=random.uniform(0, 2 * math.pi),
+        vertices=generate_irregular_shape(random.randint(28, 35))
+    )
+    return medium_asteroids
+
+
+def sma_asteroids(asteroid):
+    small_asteroids = Asteroid(
+        n_size=random.randint(12, 25),
+        x=asteroid.x + random.uniform(-10, 10),
+        y=asteroid.y + random.uniform(-10, 10),
+        dx=random.uniform(-25, 25),
+        dy=random.uniform(-25, 25),
+        angle=random.uniform(0, 2 * math.pi),
+        vertices=generate_irregular_shape(random.randint(15, 20))
+    )
+    return small_asteroids
+
+
 class AsteroidsGame:
     def __init__(self):
         self.elapsed_time = None
@@ -62,7 +88,7 @@ class AsteroidsGame:
         self.vec_medium_asteroids = []
         self.vec_small_asteroids = []
         self.vec_bullets = []
-        self.interval_shooting = 0.75
+        self.interval_shooting = 0.4
         self.last_time_shot = 0
         self.counter_shooting = 0
         self.game_over = False
@@ -219,10 +245,9 @@ class AsteroidsGame:
             ))
 
     def create_random_huge_asteroids(self, num_asteroids):
-        self.create_random_asteroids(num_asteroids, (44, 64), is_huge=True)
+        self.create_random_asteroids(num_asteroids, (50, 80), is_huge=True)
 
-    def create_random_small_asteroids(self, num_asteroids):
-        self.create_random_asteroids(num_asteroids, (20, 30), is_huge=False)
+
 
     def draw_asteroids(self):
         for asteroid in self.vec_huge_asteroids:
@@ -329,36 +354,17 @@ class AsteroidsGame:
             bullet_rect = pygame.Rect(bullet.x, bullet.y, 5, 5)
             asteroid_hit = False
 
-            for asteroid in self.vec_huge_asteroids:
-                asteroid_rect = get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
+            for asteroid_group in [self.vec_huge_asteroids, self.vec_medium_asteroids, self.vec_small_asteroids]:
+                for asteroid in asteroid_group:
+                    asteroid_rect = get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
 
-                if bullet_rect.colliderect(asteroid_rect):
-                    if self.handle_bullet_asteroid_collision(asteroid):
-                        bullets_to_remove.append(bullet)
-                    asteroid_hit = True
-                    break
+                    if bullet_rect.colliderect(asteroid_rect):
+                        if self.handle_bullet_asteroid_collision(asteroid):
+                            bullets_to_remove.append(bullet)
+                        asteroid_hit = True
+                        break
 
-            if asteroid_hit:
-                continue
-
-            for asteroid in self.vec_medium_asteroids:
-                asteroid_rect = get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
-
-                if bullet_rect.colliderect(asteroid_rect):
-                    if self.handle_bullet_asteroid_collision(asteroid):
-                        bullets_to_remove.append(bullet)
-                    asteroid_hit = True
-                    break
-
-            if asteroid_hit:
-                continue
-
-            for asteroid in self.vec_small_asteroids:
-                asteroid_rect = get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
-
-                if bullet_rect.colliderect(asteroid_rect):
-                    if self.handle_bullet_asteroid_collision(asteroid):
-                        bullets_to_remove.append(bullet)
+                if asteroid_hit:
                     break
 
         for bullet in bullets_to_remove:
@@ -372,24 +378,9 @@ class AsteroidsGame:
                 num += 1
                 self.create_random_huge_asteroids(num_asteroids=num)
 
-            medium_asteroid_1 = Asteroid(
-                n_size=random.randint(18, 30),
-                x=asteroid.x + random.uniform(-10, 10),
-                y=asteroid.y + random.uniform(-10, 10),
-                dx=random.uniform(-25, 25),
-                dy=random.uniform(-25, 25),
-                angle=random.uniform(0, 2 * math.pi),
-                vertices=generate_irregular_shape(random.randint(28, 35))
-            )
-            medium_asteroid_2 = Asteroid(
-                n_size=random.randint(18, 30),
-                x=asteroid.x + random.uniform(-10, 10),
-                y=asteroid.y + random.uniform(-10, 10),
-                dx=random.uniform(-25, 25),
-                dy=random.uniform(-25, 25),
-                angle=random.uniform(0, 2 * math.pi),
-                vertices=generate_irregular_shape(random.randint(28, 35))
-            )
+            medium_asteroid_1 = med_asteroids(asteroid)
+            medium_asteroid_2 = med_asteroids(asteroid)
+
             self.vec_medium_asteroids.extend([medium_asteroid_1, medium_asteroid_2])
 
         elif asteroid in self.vec_medium_asteroids:
@@ -422,24 +413,8 @@ class AsteroidsGame:
 
     def remove_asteroid(self, asteroid):
         self.vec_medium_asteroids.remove(asteroid)
-        small_asteroid_1 = Asteroid(
-            n_size=random.randint(12, 25),
-            x=asteroid.x + random.uniform(-10, 10),
-            y=asteroid.y + random.uniform(-10, 10),
-            dx=random.uniform(-25, 25),
-            dy=random.uniform(-25, 25),
-            angle=random.uniform(0, 2 * math.pi),
-            vertices=generate_irregular_shape(random.randint(15, 20))
-        )
-        small_asteroid_2 = Asteroid(
-            n_size=random.randint(12, 25),
-            x=asteroid.x + random.uniform(-10, 10),
-            y=asteroid.y + random.uniform(-10, 10),
-            dx=random.uniform(-25, 25),
-            dy=random.uniform(-25, 25),
-            angle=random.uniform(0, 2 * math.pi),
-            vertices=generate_irregular_shape(random.randint(15, 20))
-        )
+        small_asteroid_1 = sma_asteroids(asteroid)
+        small_asteroid_2 = sma_asteroids(asteroid)
         self.vec_small_asteroids.extend([small_asteroid_1, small_asteroid_2])
 
     def run_game(self):
