@@ -19,6 +19,6 @@ class Player(SpaceObject):
         return vertices
 
     def calculate_firing_position(self):
-        mx = [0.0, -20.0, 20.0]
-        my = [-44.0, 20.0, 20.0]
+        mx = [0.0, -16.0, 16.0]
+        my = [-35.2, 16.0, 16.0]
         return self.calculate_vertices(mx, my)

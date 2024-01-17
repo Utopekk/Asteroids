@@ -95,6 +95,7 @@ class AsteroidsGame:
         self.game_over_time = 0
         self.enemy = None
         self.score = 0
+        self.score1 = 0
         self.player = Player(n_size=20.0, x=WIDTH / 2.0, y=HEIGHT / 2.0, dx=0.0, dy=0.0, angle=0.0,
                              lives=3)
 
@@ -107,7 +108,6 @@ class AsteroidsGame:
             x = WIDTH - (i + 1) * (icon_width + spacing)
             y = spacing
 
-            # Draw a triangle representing the player ship
             vertices = [(x, y + icon_height), (x + icon_width, y + icon_height), (x + icon_width / 2, y)]
             pygame.draw.polygon(self.screen, player_color, vertices)
 
@@ -191,6 +191,11 @@ class AsteroidsGame:
                 self.vec_bullets.append(enemy_bullet)
         """
 
+    def idk(self, asteroid):
+        rotated_vertices = rotate_vertices(asteroid.vertices, asteroid.angle)
+        translated_vertices = [(x + asteroid.x, y + asteroid.y) for x, y in rotated_vertices]
+        pygame.draw.polygon(self.screen, WHITE, translated_vertices)
+
     def draw_objects(self):
         self.draw_asteroids()
 
@@ -201,14 +206,10 @@ class AsteroidsGame:
             pygame.draw.rect(self.screen, WHITE, pygame.Rect(bullet.x, bullet.y, 5, 5))
 
         for asteroid in self.vec_medium_asteroids:
-            rotated_vertices = rotate_vertices(asteroid.vertices, asteroid.angle)
-            translated_vertices = [(x + asteroid.x, y + asteroid.y) for x, y in rotated_vertices]
-            pygame.draw.polygon(self.screen, WHITE, translated_vertices)
+            self.idk(asteroid)
 
         for asteroid in self.vec_small_asteroids:
-            rotated_vertices = rotate_vertices(asteroid.vertices, asteroid.angle)
-            translated_vertices = [(x + asteroid.x, y + asteroid.y) for x, y in rotated_vertices]
-            pygame.draw.polygon(self.screen, WHITE, translated_vertices)
+            self.idk(asteroid)
 
         self.draw_player_ship()
         self.draw_life_icons()
@@ -247,17 +248,11 @@ class AsteroidsGame:
     def create_random_huge_asteroids(self, num_asteroids):
         self.create_random_asteroids(num_asteroids, (50, 80), is_huge=True)
 
-
-
     def draw_asteroids(self):
         for asteroid in self.vec_huge_asteroids:
-            rotated_vertices = rotate_vertices(asteroid.vertices, asteroid.angle)
-            translated_vertices = [(x + asteroid.x, y + asteroid.y) for x, y in rotated_vertices]
-            pygame.draw.polygon(self.screen, WHITE, translated_vertices)
+            self.idk(asteroid)
         for asteroid in self.vec_small_asteroids:
-            rotated_vertices = rotate_vertices(asteroid.vertices, asteroid.angle)
-            translated_vertices = [(x + asteroid.x, y + asteroid.y) for x, y in rotated_vertices]
-            pygame.draw.polygon(self.screen, WHITE, translated_vertices)
+            self.idk(asteroid)
 
     def draw_player_ship(self):
         vertices = self.player.calculate_firing_position()
@@ -371,8 +366,9 @@ class AsteroidsGame:
             self.vec_bullets.remove(bullet)
 
     def handle_bullet_asteroid_collision(self, asteroid, num=N):
-        self.score += 100
         if asteroid in self.vec_huge_asteroids:
+            self.score += 20
+            self.score1 += 20
             self.vec_huge_asteroids.remove(asteroid)
             if not self.vec_huge_asteroids and not self.vec_medium_asteroids and not self.vec_small_asteroids:
                 num += 1
@@ -384,9 +380,13 @@ class AsteroidsGame:
             self.vec_medium_asteroids.extend([medium_asteroid_1, medium_asteroid_2])
 
         elif asteroid in self.vec_medium_asteroids:
+            self.score += 50
+            self.score1 += 50
             self.remove_asteroid(asteroid)
 
         elif asteroid in self.vec_small_asteroids:
+            self.score += 100
+            self.score1 += 100
             self.vec_small_asteroids.remove(asteroid)
 
         if not (self.vec_huge_asteroids or self.vec_medium_asteroids or self.vec_small_asteroids):
@@ -410,6 +410,10 @@ class AsteroidsGame:
         self.check_player_with_enemy_bullet_collision(player_rect)
 
         self.check_bullet_asteroid_collisions()
+
+        if self.score1 == 10000 and self.player.lives < 3:
+            self.player.lives += 1
+            self.score1 = 0
 
     def remove_asteroid(self, asteroid):
         self.vec_medium_asteroids.remove(asteroid)
@@ -436,11 +440,20 @@ class AsteroidsGame:
 
             if not self.game_over:
                 font = pygame.font.Font(None, 48)
-                score = font.render("Score: " + str(self.score), True, BLUE)
+                score_text = "Score: " + str(self.score)
+                score = font.render(score_text, True, BLUE)
                 self.screen.fill(BLACK)
                 self.draw_life_icons()
                 self.screen.blit(score, (30, 30))
                 self.draw_objects()
+
+                if self.score >= 99990:
+                    font = pygame.font.Font(None, 72)
+                    won_text = font.render("YOU WON!", True, WHITE)
+                    self.screen.blit(won_text, (WIDTH // 2 - 132, HEIGHT // 2 - 40))
+                    pygame.display.flip()
+                    pygame.time.delay(3000)
+                    game_running = False
 
             if self.game_over:
                 if time.time() - self.game_over_time > 3:
