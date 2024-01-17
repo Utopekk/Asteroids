@@ -1,5 +1,8 @@
+import pygame
 import sys
 import random
+import math
+import time
 from Bullet import *
 from Asteroid import *
 from Player import *
@@ -93,11 +96,15 @@ class AsteroidsGame:
         self.counter_shooting = 0
         self.game_over = False
         self.game_over_time = 0
-        self.enemy = None
         self.score = 0
         self.score1 = 0
+        self.enemy_interval = 10.0
+        self.last_enemy_time = time.time()
+        self.enemy_spawn_timer = time.time()
+        self.enemy = None
         self.player = Player(n_size=20.0, x=WIDTH / 2.0, y=HEIGHT / 2.0, dx=0.0, dy=0.0, angle=0.0,
                              lives=3)
+        self.enemy_spawned = False
 
     def draw_life_icons(self):
         icon_width, icon_height = 40, 60
@@ -181,16 +188,6 @@ class AsteroidsGame:
         self.player.y += self.player.dy * self.elapsed_time
         self.player.x, self.player.y = wrap(self.player.x, self.player.y)
 
-        """if hasattr(self, 'enemy'):
-            self.enemy.x += self.enemy.dx * self.elapsed_time
-            self.enemy.y += self.enemy.dy * self.elapsed_time
-            self.enemy.x, self.enemy.y = wrap(self.enemy.x, self.enemy.y)
-
-            enemy_bullet = self.enemy.update(self.player.x, self.player.y)
-            if enemy_bullet:
-                self.vec_bullets.append(enemy_bullet)
-        """
-
     def idk(self, asteroid):
         rotated_vertices = rotate_vertices(asteroid.vertices, asteroid.angle)
         translated_vertices = [(x + asteroid.x, y + asteroid.y) for x, y in rotated_vertices]
@@ -215,9 +212,6 @@ class AsteroidsGame:
         self.draw_life_icons()
 
         pygame.display.flip()
-
-        """if hasattr(self, 'enemy'):
-            self.enemy.draw_enemy()"""
 
     def create_random_asteroids(self, num_asteroids, size_range, is_huge=True):
         asteroids = self.vec_huge_asteroids if is_huge else self.vec_small_asteroids
@@ -281,20 +275,6 @@ class AsteroidsGame:
 
         return translated_flame_vertices
 
-    """def create_enemy(self):
-        x = random.uniform(0, WIDTH)
-        y = random.uniform(0, HEIGHT)
-
-        while (
-                self.player.x + 150 < x < self.player.x - 150 or
-                self.player.y + 150 < y < self.player.y - 150
-        ):
-            x = random.uniform(0, WIDTH)
-            y = random.uniform(0, HEIGHT)
-
-        self.enemy = Enemy(screen=self.screen, x=x, y=y, dx=0, dy=0, angle=0)
-    """
-
     def check_player_collision_with_asteroids(self, player_rect):
         for asteroid in self.vec_small_asteroids[:]:
             asteroid_rect = get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
@@ -310,15 +290,6 @@ class AsteroidsGame:
             asteroid_rect = get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
             if player_rect.colliderect(asteroid_rect):
                 self.handle_player_asteroid_collision(asteroid)
-
-    def check_player_with_enemy_bullet_collision(self, player_rect):
-        for enemy_bullet in self.vec_bullets[:]:
-            enemy_bullet_rect = pygame.Rect(enemy_bullet.x, enemy_bullet.y, 5, 5)
-            if player_rect.colliderect(enemy_bullet_rect):
-                self.vec_bullets.remove(enemy_bullet)
-                self.player.lives -= 1
-                if self.player.lives <= 0:
-                    self.handle_game_over("Game Over")
 
     def handle_player_asteroid_collision(self, asteroid):
         if asteroid in self.vec_huge_asteroids:
@@ -407,7 +378,6 @@ class AsteroidsGame:
         player_rect = pygame.Rect(self.player.x - 10, self.player.y - 24, 20, 34)
 
         self.check_player_collision_with_asteroids(player_rect)
-        self.check_player_with_enemy_bullet_collision(player_rect)
 
         self.check_bullet_asteroid_collisions()
 
@@ -446,7 +416,6 @@ class AsteroidsGame:
                 self.draw_life_icons()
                 self.screen.blit(score, (30, 30))
                 self.draw_objects()
-
                 if self.score >= 99990:
                     font = pygame.font.Font(None, 72)
                     won_text = font.render("YOU WON!", True, WHITE)
