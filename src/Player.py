@@ -1,6 +1,6 @@
 from SpaceObject import SpaceObject
 import math
-from DrawManager import rotate_vertices
+from utils import *
 
 
 class Player(SpaceObject):
@@ -20,7 +20,7 @@ class Player(SpaceObject):
             (flame_width / 2, 20)
         ]
 
-        rotated_flame_vertices = rotate_vertices(flame_vertices, self.angle)
+        rotated_flame_vertices = Utils.rotate_vertices(flame_vertices, self.angle)
 
         translated_flame_vertices = [
             (x + self.x, y + self.y) for x, y in rotated_flame_vertices

@@ -15,6 +15,7 @@ from src.Bullet import *
 from src.DrawManager import *
 from src.utils import *
 
+
 N = 4
 
 
@@ -30,30 +31,8 @@ def generate_irregular_shape(size):
     return vertices
 
 
-def rotate_vertices(vertices, angle):
-    rotated_vertices = []
-    for x, y in vertices:
-        rotated_x = x * math.cos(angle) - y * math.sin(angle)
-        rotated_y = x * math.sin(angle) + y * math.cos(angle)
-        rotated_vertices.append((rotated_x, rotated_y))
-    return rotated_vertices
-
-
-def wrap(ix, iy):
-    ox, oy = ix, iy
-    if ix < 0.0:
-        ox = ix + WIDTH
-    elif ix >= WIDTH:
-        ox = ix - WIDTH
-    if iy < 0.0:
-        oy = iy + HEIGHT
-    elif iy >= HEIGHT:
-        oy = iy - HEIGHT
-    return ox, oy
-
-
 def get_rotated_rect(vertices, angle, x, y):
-    rotated_vertices = rotate_vertices(vertices, angle)
+    rotated_vertices = Utils.rotate_vertices(vertices, angle)
     min_x = min(x for x, y in rotated_vertices)
     min_y = min(y for x, y in rotated_vertices)
     max_x = max(x for x, y in rotated_vertices)
@@ -137,14 +116,10 @@ class AsteroidsGame:
             particle = Particle(x, y, color, lifetime, dx, dy)
             self.vec_particles.append(particle)
 
-    # ... (existing methods)
-
     def update_particles(self, elapsed_time):
         self.vec_particles = [particle for particle in self.vec_particles if particle.lifetime > 0]
         for particle in self.vec_particles:
             particle.update(elapsed_time)
-
-
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -200,7 +175,7 @@ class AsteroidsGame:
         if hasattr(self, 'enemy'):
             self.enemy.x += self.enemy.dx * self.elapsed_time
             self.enemy.y += self.enemy.dy * self.elapsed_time
-            self.enemy.x, self.enemy.y = wrap(self.enemy.x, self.enemy.y)
+            self.enemy.x, self.enemy.y = Utils.wrap(self.enemy.x, self.enemy.y)
 
             enemy_bullet = self.enemy.update(self.player.x, self.player.y)
             if enemy_bullet:
@@ -212,26 +187,26 @@ class AsteroidsGame:
         for bullet in self.vec_bullets:
             bullet.x += bullet.dx * self.elapsed_time * bullet.acceleration
             bullet.y += bullet.dy * self.elapsed_time * bullet.acceleration
-            bullet.x, bullet.y = wrap(bullet.x, bullet.y)
+            bullet.x, bullet.y = Utils.wrap(bullet.x, bullet.y)
 
         for asteroid in self.vec_huge_asteroids:
             asteroid.x += asteroid.dx * self.elapsed_time
             asteroid.y += asteroid.dy * self.elapsed_time
-            asteroid.x, asteroid.y = wrap(asteroid.x, asteroid.y)
+            asteroid.x, asteroid.y = Utils.wrap(asteroid.x, asteroid.y)
 
         for asteroid in self.vec_medium_asteroids:
             asteroid.x += asteroid.dx * self.elapsed_time
             asteroid.y += asteroid.dy * self.elapsed_time
-            asteroid.x, asteroid.y = wrap(asteroid.x, asteroid.y)
+            asteroid.x, asteroid.y = Utils.wrap(asteroid.x, asteroid.y)
 
         for asteroid in self.vec_small_asteroids:
             asteroid.x += asteroid.dx * self.elapsed_time
             asteroid.y += asteroid.dy * self.elapsed_time
-            asteroid.x, asteroid.y = wrap(asteroid.x, asteroid.y)
+            asteroid.x, asteroid.y = Utils.wrap(asteroid.x, asteroid.y)
 
         self.player.x += self.player.dx * self.elapsed_time
         self.player.y += self.player.dy * self.elapsed_time
-        self.player.x, self.player.y = wrap(self.player.x, self.player.y)
+        self.player.x, self.player.y = Utils.wrap(self.player.x, self.player.y)
 
         if self.player.destroyed and time.time() >= self.player_respawn_timer:
             self.player.x = WIDTH / 2.0
@@ -244,20 +219,18 @@ class AsteroidsGame:
         if hasattr(self, 'enemy'):
             self.enemy.x += self.enemy.dx * self.elapsed_time
             self.enemy.y += self.enemy.dy * self.elapsed_time
-            self.enemy.x, self.enemy.y = wrap(self.enemy.x, self.enemy.y)
+            self.enemy.x, self.enemy.y = Utils.wrap(self.enemy.x, self.enemy.y)
 
             enemy_bullet = self.enemy.update(self.player.x, self.player.y)
             if enemy_bullet:
                 self.vec_bullets.append(enemy_bullet)
 
     def draw_huge_asteroid_outline(self, asteroid):
-        rotated_vertices = rotate_vertices(asteroid.vertices, asteroid.angle)
+        rotated_vertices = Utils.rotate_vertices(asteroid.vertices, asteroid.angle)
         translated_vertices = [(x + asteroid.x, y + asteroid.y) for x, y in rotated_vertices]
 
         # Draw outline for huge asteroid
         pygame.draw.polygon(self.screen, WHITE, translated_vertices, 2)
-
-
 
     def create_enemy(self):
         x = random.uniform(0, 0)
@@ -298,10 +271,6 @@ class AsteroidsGame:
                                      (50 + self.stage.asteroidDifficultySize, 80 + self.stage.asteroidDifficultySize),
                                      is_huge=True)
 
-
-
-
-
     def calculate_flame_vertices(self):
         flame_length = 40
         flame_width = 20
@@ -311,7 +280,7 @@ class AsteroidsGame:
             (flame_width / 2, 20)
         ]
 
-        rotated_flame_vertices = rotate_vertices(flame_vertices, self.player.angle)
+        rotated_flame_vertices = Utils.rotate_vertices(flame_vertices, self.player.angle)
 
         translated_flame_vertices = [
             (x + self.player.x, y + self.player.y) for x, y in rotated_flame_vertices
@@ -368,6 +337,7 @@ class AsteroidsGame:
             self.create_random_huge_asteroids(num_asteroids=N)
 
     last_asteroid_gen_time = 0
+
     def check_bullet_asteroid_collisions(self):
         bullets_to_remove = []
 
@@ -477,7 +447,6 @@ class AsteroidsGame:
                 stage_text = "Stage: " + str(self.stage.stage)
                 stage = font.render(stage_text, True, BLUE)
                 self.screen.blit(stage, (30, 70))
-
 
                 if self.score >= 99990:
                     font = pygame.font.Font(None, 72)
