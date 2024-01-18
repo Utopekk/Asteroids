@@ -12,6 +12,7 @@ class Enemy(SpaceObject):
         self.shooting_interval = shooting_interval
         self.last_time_shot = 0
         self.enemy_image = pygame.image.load("resources\\enemy.svg")
+
     def draw_enemy(self):
 
         self.screen.blit(self.enemy_image, (self.x, self.y))
@@ -40,4 +41,3 @@ class Enemy(SpaceObject):
             bullet = self.shoot_bullet(player_x, player_y)
             self.last_time_shot = now
             return bullet
-

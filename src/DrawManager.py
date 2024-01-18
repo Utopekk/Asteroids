@@ -70,7 +70,7 @@ class DrawManager:
             particle.draw(self.screen)
 
     def draw_objects(self, vec_huge_asteroids, vec_medium_asteroids, vec_small_asteroids, vec_bullets, player,
-                     elapsed_time, shop_button,vec_particles,enemy):
+                     elapsed_time, shop_button, vec_particles, enemy):
         self.draw_asteroids(vec_huge_asteroids, vec_small_asteroids)
 
         for bullet in vec_bullets:
