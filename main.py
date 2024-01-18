@@ -1,7 +1,6 @@
 import sys
 import random
 import os
-
 sys.path.append('src')
 from pygame import FULLSCREEN
 from src.Settings import *
@@ -431,14 +430,6 @@ class AsteroidsGame:
                     game_running = False
             if not self.game_over:
                 self.elapsed_time = 0.1
-                self.handle_input()
-                self.update_objects()
-                self.update_particles(self.elapsed_time)
-                self.check_collisions()
-                self.draw_manager.draw_objects(self.vec_huge_asteroids, self.vec_medium_asteroids,
-                                               self.vec_small_asteroids, self.vec_bullets, self.player,
-                                               self.elapsed_time, self.vec_particles, self.enemy)
-            if not self.game_over:
                 font = pygame.font.Font(None, 48)
                 score_text = "Score: " + str(self.score)
                 score = font.render(score_text, True, BLUE)
@@ -447,7 +438,14 @@ class AsteroidsGame:
                 stage_text = "Stage: " + str(self.stage.stage)
                 stage = font.render(stage_text, True, BLUE)
                 self.screen.blit(stage, (30, 70))
-
+                self.handle_input()
+                self.update_objects()
+                self.update_particles(self.elapsed_time)
+                self.check_collisions()
+                self.draw_manager.draw_objects(self.vec_huge_asteroids, self.vec_medium_asteroids,
+                                               self.vec_small_asteroids, self.vec_bullets, self.player,
+                                               self.elapsed_time, self.vec_particles, self.enemy)
+            if not self.game_over:
                 if self.score >= 99990:
                     font = pygame.font.Font(None, 72)
                     won_text = font.render("YOU WON!", True, WHITE)
