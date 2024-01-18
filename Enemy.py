@@ -11,7 +11,7 @@ class Enemy(SpaceObject):
         self.screen = screen
         self.shooting_interval = shooting_interval
         self.last_time_shot = 0
-
+    enemy_image = pygame.image.load("enemy.svg")
     def draw_enemy(self):
         pygame.draw.rect(self.screen, (0, 255, 0), pygame.Rect(self.x, self.y, 30, 30))
 

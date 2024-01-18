@@ -97,6 +97,10 @@ class AsteroidsGame:
         self.enemy = None
         self.score = 0
         self.score1 = 0
+        self.enemy_interval = 10.0
+        self.last_enemy_time = time.time()
+        self.enemy_spawn_timer = time.time()
+        self.enemy = None
         self.player = Player(n_size=20.0, x=WIDTH / 2, y=HEIGHT / 2, dx=0.0, dy=0.0, angle=0.0,
                              lives=3)
         self.vec_particles = []
