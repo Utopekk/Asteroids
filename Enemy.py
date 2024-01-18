@@ -11,17 +11,18 @@ class Enemy(SpaceObject):
         self.screen = screen
         self.shooting_interval = shooting_interval
         self.last_time_shot = 0
-    enemy_image = pygame.image.load("enemy.svg")
+        self.enemy_image = pygame.image.load("enemy.svg")
     def draw_enemy(self):
-        pygame.draw.rect(self.screen, (0, 255, 0), pygame.Rect(self.x, self.y, 30, 30))
 
-    def shoot_bullet(self):
-        bullet_speed = 10.0  # Adjust the speed of the bullet as needed
-        bullet_direction = math.atan2(self.dy, self.dx)  # Use the direction of the enemy's movement
+        self.screen.blit(self.enemy_image, (self.x, self.y))
+
+    def shoot_bullet(self, player_x, player_y):
+        bullet_speed = 40.0
+        bullet_direction = math.atan2(player_y - self.y, player_x - self.x)
         bullet = EnemyBullet(
             n_size=0,
-            x=self.x,
-            y=self.y,
+            x=self.x + 50,
+            y=self.y + 50,
             dx=bullet_speed * math.cos(bullet_direction),
             dy=bullet_speed * math.sin(bullet_direction),
             angle=bullet_direction,
@@ -30,13 +31,13 @@ class Enemy(SpaceObject):
         return bullet
 
     def update(self, player_x, player_y):
-        # Adjust the enemy's position based on the player's position
         angle_to_player = math.atan2(player_y - self.y, player_x - self.x)
-        self.dx = math.cos(angle_to_player) * 10  # Adjust the speed as needed
-        self.dy = math.sin(angle_to_player) * 10  # Adjust the speed as needed
+        self.dx = math.cos(angle_to_player) * 10
+        self.dy = 0
 
         now = time.time()
         if now - self.last_time_shot >= self.shooting_interval:
-            bullet = self.shoot_bullet()
+            bullet = self.shoot_bullet(player_x, player_y)
             self.last_time_shot = now
             return bullet
+
