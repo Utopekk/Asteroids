@@ -10,7 +10,6 @@ from src.Enemy import *
 from src.Particle import *
 from src.Settings import *
 from src.Stage import *
-from src.ShopButton import *
 import time
 N = 4
 
@@ -110,7 +109,6 @@ class AsteroidsGame:
         self.vec_particles = []
         self.player_respawn_timer = 0 
         button_image_path = os.path.join(os.path.dirname(__file__), 'resources\shop.png') 
-        self.shop_button = ShopButton(90, 950, 50, button_image_path, on_button_click)
 
     def adjust_resolution(self):
         monitor_info = pygame.display.Info()
@@ -279,7 +277,6 @@ class AsteroidsGame:
             self.enemy.draw_enemy()    
         
         self.draw_player_ship()
-        self.shop_button.draw(self.screen)
         self.draw_life_icons()
 
         pygame.display.flip()
@@ -520,11 +517,6 @@ class AsteroidsGame:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     game_running = False
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        mouse_pos = pygame.mouse.get_pos()
-                        if self.shop_button.is_clicked(mouse_pos):
-                            self.shop_button.handle_click()
             if not self.game_over:
                 self.elapsed_time = 0.1
                 self.handle_input()
@@ -591,3 +583,4 @@ class AsteroidsGame:
 if __name__ == "__main__":
     game = AsteroidsGame()
     game.run_game()
+ 
