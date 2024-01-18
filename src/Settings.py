@@ -5,7 +5,5 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
 # Screen
-WIDTH = 1680
-HEIGHT = 1050
-
-
+WIDTH = 1280
+HEIGHT = 720

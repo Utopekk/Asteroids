@@ -1,5 +1,6 @@
 import pygame
 
+
 class ShopButton:
     def __init__(self, x, y, radius, image_path, action_callback):
         self.x = x
