@@ -1,17 +1,19 @@
 import sys
-
-sys.path.append('src')
 import random
 import os
+
+sys.path.append('src')
 from pygame import FULLSCREEN
-from src.Bullet import *
+from src.Settings import *
 from src.Asteroid import *
 from src.Player import *
 from src.Enemy import *
 from src.Particle import *
-from src.Settings import *
 from src.Stage import *
-import time
+from src.ShopButton import *
+from src.Bullet import *
+from src.DrawManager import *
+from src.utils import *
 
 N = 4
 
@@ -113,6 +115,7 @@ class AsteroidsGame:
                              lives=3)
         self.vec_particles = []
         self.player_respawn_timer = 0
+        self.draw_manager = DrawManager(self.screen)
         self.BulletDeploySound = pygame.mixer.Sound("resources\\363698__jofae__retro-gun-shot.mp3")
         self.BulletDeploySound.set_volume(0.1)
         self.ColisionSound = pygame.mixer.Sound("resources\\170144__timgormly__8-bit-explosion2.mp3")
@@ -141,21 +144,7 @@ class AsteroidsGame:
         for particle in self.vec_particles:
             particle.update(elapsed_time)
 
-    def draw_particles(self):
-        for particle in self.vec_particles:
-            particle.draw(self.screen)
 
-    def draw_life_icons(self):
-        icon_width, icon_height = 40, 60
-        spacing = 10
-        player_color = RED
-
-        for i in range(self.player.lives):
-            x = WIDTH - (i + 1) * (icon_width + spacing)
-            y = spacing
-
-            vertices = [(x, y + icon_height), (x + icon_width, y + icon_height), (x + icon_width / 2, y)]
-            pygame.draw.polygon(self.screen, player_color, vertices, 2)
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -268,28 +257,7 @@ class AsteroidsGame:
         # Draw outline for huge asteroid
         pygame.draw.polygon(self.screen, WHITE, translated_vertices, 2)
 
-    def draw_objects(self):
-        self.draw_asteroids()
 
-        for bullet in self.vec_bullets:
-            bullet.x += bullet.dx * self.elapsed_time * bullet.acceleration
-            bullet.y += bullet.dy * self.elapsed_time * bullet.acceleration
-            bullet.x, bullet.y = wrap(bullet.x, bullet.y)
-            pygame.draw.rect(self.screen, WHITE, pygame.Rect(bullet.x, bullet.y, 5, 5))
-
-        for asteroid in self.vec_medium_asteroids:
-            self.draw_asteroid_outline(asteroid)
-
-        for asteroid in self.vec_small_asteroids:
-            self.draw_asteroid_outline(asteroid)
-
-        if hasattr(self, 'enemy'):
-            self.enemy.draw_enemy()
-
-        self.draw_player_ship()
-        self.draw_life_icons()
-
-        pygame.display.flip()
 
     def create_enemy(self):
         x = random.uniform(0, 0)
@@ -330,48 +298,9 @@ class AsteroidsGame:
                                      (50 + self.stage.asteroidDifficultySize, 80 + self.stage.asteroidDifficultySize),
                                      is_huge=True)
 
-    def draw_asteroids(self):
-        for asteroid in self.vec_huge_asteroids:
-            self.draw_huge_asteroid_outline(asteroid)
-        for asteroid in self.vec_small_asteroids:
-            self.draw_huge_asteroid_outline(asteroid)
 
-    def draw_asteroid_outline(self, asteroid):
-        rotated_vertices = rotate_vertices(asteroid.vertices, asteroid.angle)
-        translated_vertices = [(x + asteroid.x, y + asteroid.y) for x, y in rotated_vertices]
 
-        # Draw filled asteroid
-        pygame.draw.polygon(self.screen, BLACK, translated_vertices)
 
-        # Draw outline
-        pygame.draw.polygon(self.screen, WHITE, translated_vertices, 2)
-
-    def draw_player_ship(self):
-        if self.player.destroyed:
-            return
-        vertices = self.player.calculate_firing_position()
-
-        # Draw outline for player's ship
-        pygame.draw.polygon(self.screen, RED, vertices, 2)
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_UP]:
-            flame_vertices = self.calculate_flame_vertices()
-
-            # Draw outline for flame
-            pygame.draw.polygon(self.screen, (255, 165, 0), flame_vertices, 2)
-
-        # Draw filled polygon
-        pygame.draw.polygon(self.screen, BLACK, vertices)
-
-        # Draw outline
-        pygame.draw.polygon(self.screen, RED, vertices, 2)
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_UP]:
-            flame_vertices = self.calculate_flame_vertices()
-            pygame.draw.polygon(self.screen, BLACK, flame_vertices)  # Draw filled flame
-            pygame.draw.polygon(self.screen, (255, 165, 0), flame_vertices, 2)  # Draw flame outline
 
     def calculate_flame_vertices(self):
         flame_length = 40
@@ -438,6 +367,7 @@ class AsteroidsGame:
         if not (self.vec_huge_asteroids or self.vec_medium_asteroids or self.vec_small_asteroids):
             self.create_random_huge_asteroids(num_asteroids=N)
 
+    last_asteroid_gen_time = 0
     def check_bullet_asteroid_collisions(self):
         bullets_to_remove = []
 
@@ -525,6 +455,7 @@ class AsteroidsGame:
         game_running = True
 
         while game_running:
+            self.screen.fill(BLACK)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     game_running = False
@@ -534,20 +465,19 @@ class AsteroidsGame:
                 self.update_objects()
                 self.update_particles(self.elapsed_time)
                 self.check_collisions()
-
+                self.draw_manager.draw_objects(self.vec_huge_asteroids, self.vec_medium_asteroids,
+                                               self.vec_small_asteroids, self.vec_bullets, self.player,
+                                               self.elapsed_time, self.vec_particles, self.enemy)
             if not self.game_over:
                 font = pygame.font.Font(None, 48)
                 score_text = "Score: " + str(self.score)
                 score = font.render(score_text, True, BLUE)
-                self.screen.fill(BLACK)
-                self.draw_life_icons()
                 self.screen.blit(score, (30, 30))
                 font = pygame.font.Font(None, 48)
                 stage_text = "Stage: " + str(self.stage.stage)
                 stage = font.render(stage_text, True, BLUE)
                 self.screen.blit(stage, (30, 70))
-                self.draw_objects()
-                self.draw_particles()
+
 
                 if self.score >= 99990:
                     font = pygame.font.Font(None, 72)
@@ -557,10 +487,9 @@ class AsteroidsGame:
                     pygame.time.delay(3000)
                     game_running = False
 
-                num_current_asteroids = len(self.vec_huge_asteroids) + len(self.vec_medium_asteroids) + len(
+                num_curr_asteroids = len(self.vec_huge_asteroids) + len(self.vec_medium_asteroids) + len(
                     self.vec_small_asteroids) + self.delay
-                if (
-                        num_current_asteroids == 0 or 2.00 - self.stage.intervalSpawning <= time.time() - self.last_asteroid_generation_time <= 10.0):
+                if num_curr_asteroids == 0 or 2.00 - self.stage.intervalSpawning <= time.time() - self.last_asteroid_gen_time <= 10.0:
                     if self.count < self.stage.newAsteroids:
                         if self.delay == 1:
                             self.st += 1
