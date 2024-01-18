@@ -8,6 +8,7 @@ class Player(SpaceObject):
         self.acceleration = 0.1
         self.speed = 10
         self.lives = lives
+        self.destroyed = False
 
     def calculate_vertices(self, mx, my):
         vertices = []
