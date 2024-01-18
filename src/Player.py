@@ -1,6 +1,5 @@
 from SpaceObject import SpaceObject
 import math
-from DrawManager import rotate_vertices
 
 
 class Player(SpaceObject):
@@ -11,22 +10,6 @@ class Player(SpaceObject):
         self.lives = lives
         self.destroyed = False
 
-    def calculate_flame_vertices(self):
-        flame_length = 40
-        flame_width = 20
-        flame_vertices = [
-            (0, flame_length),
-            (-flame_width / 2, 20),
-            (flame_width / 2, 20)
-        ]
-
-        rotated_flame_vertices = rotate_vertices(flame_vertices, self.angle)
-
-        translated_flame_vertices = [
-            (x + self.x, y + self.y) for x, y in rotated_flame_vertices
-        ]
-
-        return translated_flame_vertices
     def calculate_vertices(self, mx, my):
         vertices = []
         for i in range(3):

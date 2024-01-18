@@ -7,7 +7,7 @@ class Particle:
         self.y = y
         self.color = color
         self.lifetime = lifetime
-        self.size = 3
+        self.size = 3  # Size of the particle
         self.dx = dx
         self.dy = dy
 
