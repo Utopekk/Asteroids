@@ -6,4 +6,6 @@ BLUE = (0, 0, 255)
 
 # Screen
 WIDTH = 1680
-HEIGHT = 1050
+HEIGHT = 1020
+
+N = 4

@@ -1,6 +1,4 @@
-from Settings import *
 from main import *
-import math
 from Utils import Utils
 import pygame
 

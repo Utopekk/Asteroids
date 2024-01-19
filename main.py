@@ -1,6 +1,5 @@
 import sys
 import random
-import os
 sys.path.append('src')
 from pygame import FULLSCREEN
 from src.Settings import *
@@ -9,63 +8,15 @@ from src.Player import *
 from src.Enemy import *
 from src.Particle import *
 from src.Stage import *
-from src.ShopButton import *
 from src.Bullet import *
 from src.DrawManager import *
 from src.Utils import *
 from src.SoundManager import *
-
+from src.HandleManager import HandleManager
+from src.CreateManager import CreateManager
+from src.CollisionManager import CollisionManager
 
 N = 4
-
-
-def generate_irregular_shape(size):
-    num_vertices = random.randint(5, 10)
-    angle_increment = 2 * math.pi / num_vertices
-    vertices = []
-    for i in range(num_vertices):
-        radius = size + random.uniform(-size / 2, size / 2)
-        x = radius * math.cos(i * angle_increment)
-        y = radius * math.sin(i * angle_increment)
-        vertices.append((x, y))
-    return vertices
-
-
-def get_rotated_rect(vertices, angle, x, y):
-    rotated_vertices = Utils.rotate_vertices(vertices, angle)
-    min_x = min(x for x, y in rotated_vertices)
-    min_y = min(y for x, y in rotated_vertices)
-    max_x = max(x for x, y in rotated_vertices)
-    max_y = max(y for x, y in rotated_vertices)
-    return pygame.Rect(min_x + x, min_y + y, max_x - min_x, max_y - min_y)
-
-
-def med_asteroids(asteroid):
-    medium_asteroids = Asteroid(
-        n_size=random.randint(20, 30),
-        x=asteroid.x + random.uniform(-10, 10),
-        y=asteroid.y + random.uniform(-10, 10),
-        dx=random.uniform(-25, 25),
-        dy=random.uniform(-25, 25),
-        angle=random.uniform(0, 2 * math.pi),
-        vertices=generate_irregular_shape(random.randint(28, 35))
-    )
-    return medium_asteroids
-
-
-def sma_asteroids(asteroid):
-    small_asteroids = Asteroid(
-        n_size=random.randint(12, 20),
-        x=asteroid.x + random.uniform(-10, 10),
-        y=asteroid.y + random.uniform(-10, 10),
-        dx=random.uniform(-25, 25),
-        dy=random.uniform(-25, 25),
-        angle=random.uniform(0, 2 * math.pi),
-        vertices=generate_irregular_shape(random.randint(15, 20))
-    )
-    return small_asteroids
-
-
 
 
 class AsteroidsGame:
@@ -78,30 +29,37 @@ class AsteroidsGame:
         self.vec_medium_asteroids = []
         self.vec_small_asteroids = []
         self.vec_bullets = []
-        self.interval_shooting = 0.4
+        self.interval_shooting = 0.1
         self.last_time_shot = 0
         self.counter_shooting = 0
+        self.player = Player(n_size=20.0, x=WIDTH / 2, y=HEIGHT / 2, dx=0.0, dy=0.0, angle=0.0,
+                             lives=3)
+
         self.game_over = False
         self.game_over_time = 0
         self.enemy = None
         self.stage = Stage(1)
         self.score = 0
         self.score1 = 0
-        self.enemy = None
-        self.player = Player(n_size=20.0, x=WIDTH / 2, y=HEIGHT / 2, dx=0.0, dy=0.0, angle=0.0,
-                             lives=3)
+
         self.vec_particles = []
         self.player_respawn_timer = 0
         self.draw_manager = DrawManager(self.screen)
         self.BulletDeploySound = SoundEffect("resources\\363698__jofae__retro-gun-shot.mp3", 0.1)
         self.ColisionSound = SoundEffect("resources\\170144__timgormly__8-bit-explosion2.mp3", 0.1)
         self.GameOverSound = SoundEffect("resources\\412168__screamstudio__arcade-game-over.wav", 0.1)
-        
-        self.cmb_image_path = "resources\\muteButton.png"
-        self.circular_mute_button = CircularButton(60, 1000, 60, self.cmb_image_path, self.on_button_click)
-        self.cdb_image_path = "resources\\muteButton2.png"
-        self.circular_muted_button = CircularButton(60, 1000, 60, self.cdb_image_path, self.on_button_click)
 
+        self.cmb_image_path = "resources\\muteButton.svg"
+        self.circular_mute_button = CircularButton(90, 1000, 60, self.cmb_image_path, self.on_button_click)
+        self.cdb_image_path = "resources\\muteButton2.svg"
+        self.circular_muted_button = CircularButton(90, 1000, 60, self.cdb_image_path, self.on_button_click)
+        self.handle_manager = HandleManager(self.player, self.vec_particles, self.screen, self.stage)
+        self.create_manager = CreateManager(self.player, self.vec_particles, self.vec_huge_asteroids,
+                                            self.vec_small_asteroids, self.screen, self.stage)
+        self.collision_manager = CollisionManager(self.player, self.vec_huge_asteroids, self.vec_medium_asteroids,
+                                                  self.vec_small_asteroids, self.vec_bullets, self.handle_manager,
+                                                  "resources\\170144__timgormly__8-bit-explosion2.mp3",
+                                                  self.vec_particles)
         self.is_game_muted = False
 
     def on_button_click(self):
@@ -122,18 +80,20 @@ class AsteroidsGame:
         monitor_height = monitor_info.current_h
         self.screen = pygame.display.set_mode((monitor_width, monitor_height), pygame.FULLSCREEN)
 
-    def create_particle_effect(self, x, y, color, num_particles):
-        for _ in range(num_particles):
-            lifetime = random.uniform(0.2, 0.5)
-            dx = random.uniform(-50, 50)
-            dy = random.uniform(-50, 50)
-            particle = Particle(x, y, color, lifetime, dx, dy)
-            self.vec_particles.append(particle)
-
     def update_particles(self, elapsed_time):
         self.vec_particles = [particle for particle in self.vec_particles if particle.lifetime > 0]
         for particle in self.vec_particles:
             particle.update(elapsed_time)
+
+    def has_enemy(self):
+        if self.enemy is not None:
+            self.enemy.x += self.enemy.dx * self.elapsed_time
+            self.enemy.y += self.enemy.dy * self.elapsed_time
+            self.enemy.x, self.enemy.y = Utils.wrap(self.enemy.x, self.enemy.y)
+
+            enemy_bullet = self.enemy.update(self.player.x, self.player.y)
+            if enemy_bullet:
+                self.vec_bullets.append(enemy_bullet)
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -186,17 +146,10 @@ class AsteroidsGame:
             ))
             self.last_time_shot = now
             self.counter_shooting += 1
-        if hasattr(self, 'enemy'):
-            self.enemy.x += self.enemy.dx * self.elapsed_time
-            self.enemy.y += self.enemy.dy * self.elapsed_time
-            self.enemy.x, self.enemy.y = Utils.wrap(self.enemy.x, self.enemy.y)
-
-            enemy_bullet = self.enemy.update(self.player.x, self.player.y)
-            if enemy_bullet:
-                self.vec_bullets.append(enemy_bullet)
+        self.has_enemy()
 
     def update_objects(self):
-        self.vec_bullets = [b for b in self.vec_bullets if time.time() - b.creation_time <= 1]
+        self.vec_bullets = [b for b in self.vec_bullets if time.time() - b.creation_time <= 1.2]
 
         for bullet in self.vec_bullets:
             bullet.x += bullet.dx * self.elapsed_time * bullet.acceleration
@@ -230,212 +183,17 @@ class AsteroidsGame:
             self.player.dy = 0.0
             self.player.destroyed = False
 
-        if hasattr(self, 'enemy'):
-            self.enemy.x += self.enemy.dx * self.elapsed_time
-            self.enemy.y += self.enemy.dy * self.elapsed_time
-            self.enemy.x, self.enemy.y = Utils.wrap(self.enemy.x, self.enemy.y)
-
-            enemy_bullet = self.enemy.update(self.player.x, self.player.y)
-            if enemy_bullet:
-                self.vec_bullets.append(enemy_bullet)
-
-    def draw_huge_asteroid_outline(self, asteroid):
-        rotated_vertices = Utils.rotate_vertices(asteroid.vertices, asteroid.angle)
-        translated_vertices = [(x + asteroid.x, y + asteroid.y) for x, y in rotated_vertices]
-
-        # Draw outline for huge asteroid
-        pygame.draw.polygon(self.screen, WHITE, translated_vertices, 2)
-
-    def create_enemy(self):
-        x = random.uniform(0, 0)
-        y = random.uniform(0, 0)
-        while (
-                self.player.x + 150 < x < self.player.x - 150 or
-                self.player.y + 150 < y < self.player.y - 150
-        ):
-            x = random.uniform(0, 0)
-            y = random.uniform(0, 0)
-
-        self.enemy = Enemy(screen=self.screen, x=x, y=y, dx=0, dy=0, angle=0)
-
-    def create_random_asteroids(self, num_asteroids, size_range, is_huge=True):
-        asteroids = self.vec_huge_asteroids if is_huge else self.vec_small_asteroids
-
-        for _ in range(num_asteroids):
-            size = random.randint(*size_range)
-            x = random.randint(0, WIDTH)
-            y = random.randint(0, HEIGHT)
-            while math.fabs(self.player.x - x) <= 400 and math.fabs(self.player.y - y) <= 400:
-                x = random.randint(0, WIDTH)
-                y = random.randint(0, HEIGHT)
-
-            vertices = generate_irregular_shape(size)
-            asteroids.append(Asteroid(
-                n_size=size,
-                x=x,
-                y=y,
-                dx=random.uniform(-10, 10),
-                dy=random.uniform(-10, 10),
-                angle=random.uniform(0, 2 * math.pi),
-                vertices=vertices
-            ))
-
-    def create_random_huge_asteroids(self, num_asteroids):
-        self.create_random_asteroids(num_asteroids,
-                                     (50 + self.stage.asteroidDifficultySize, 80 + self.stage.asteroidDifficultySize),
-                                     is_huge=True)
-
-    def calculate_flame_vertices(self):
-        flame_length = 40
-        flame_width = 20
-        flame_vertices = [
-            (0, flame_length),
-            (-flame_width / 2, 20),
-            (flame_width / 2, 20)
-        ]
-
-        rotated_flame_vertices = Utils.rotate_vertices(flame_vertices, self.player.angle)
-
-        translated_flame_vertices = [
-            (x + self.player.x, y + self.player.y) for x, y in rotated_flame_vertices
-        ]
-
-        return translated_flame_vertices
-
-    def check_player_collision_with_asteroids(self, player_rect):
-        for asteroid in self.vec_small_asteroids[:]:
-            asteroid_rect = get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
-            if player_rect.colliderect(asteroid_rect):
-                self.handle_player_asteroid_collision(asteroid)
-
-        for asteroid in self.vec_medium_asteroids[:]:
-            asteroid_rect = get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
-            if player_rect.colliderect(asteroid_rect):
-                self.handle_player_asteroid_collision(asteroid)
-
-        for asteroid in self.vec_huge_asteroids[:]:
-            asteroid_rect = get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
-            if player_rect.colliderect(asteroid_rect):
-                self.handle_player_asteroid_collision(asteroid)
-
-    def check_player_with_enemy_bullet_collision(self, player_rect):
-        for enemy_bullet in self.vec_bullets[:]:
-            enemy_bullet_rect = pygame.Rect(enemy_bullet.x, enemy_bullet.y, 5, 5)
-            if player_rect.colliderect(enemy_bullet_rect):
-                self.vec_bullets.remove(enemy_bullet)
-                self.player.lives -= 1
-                if self.player.lives <= 0:
-                    self.handle_game_over("Game Over")
-
-    def handle_player_asteroid_collision(self, asteroid):
-        if self.player.destroyed:
-            return
-        if asteroid in self.vec_huge_asteroids:
-            self.vec_huge_asteroids.remove(asteroid)
-        elif asteroid in self.vec_medium_asteroids:
-            self.remove_asteroid(asteroid)
-        elif asteroid in self.vec_small_asteroids:
-            self.vec_small_asteroids.remove(asteroid)
-
-        self.player.lives -= 1
-
-        if self.player.lives > 0:
-            self.create_particle_effect(self.player.x, self.player.y, WHITE, 3)
-            self.player.destroyed = True
-            self.player_respawn_timer = time.time() + 2
-            self.ColisionSound.play()
-        else:
-            self.handle_game_over("Game Over")
-
-        if not (self.vec_huge_asteroids or self.vec_medium_asteroids or self.vec_small_asteroids):
-            self.create_random_huge_asteroids(num_asteroids=N)
+        self.has_enemy()
 
     last_asteroid_gen_time = 0
-
-    def check_bullet_asteroid_collisions(self):
-        bullets_to_remove = []
-
-        for bullet in self.vec_bullets:
-            bullet_rect = pygame.Rect(bullet.x, bullet.y, 5, 5)
-            asteroid_hit = False
-
-            for asteroid_group in [self.vec_huge_asteroids, self.vec_medium_asteroids, self.vec_small_asteroids]:
-                for asteroid in asteroid_group:
-                    asteroid_rect = get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
-
-                    if bullet_rect.colliderect(asteroid_rect):
-                        if self.handle_bullet_asteroid_collision(asteroid):
-                            bullets_to_remove.append(bullet)
-                        asteroid_hit = True
-                        self.ColisionSound.play()
-                        break
-
-                if asteroid_hit:
-                    break
-
-        for bullet in bullets_to_remove:
-            self.vec_bullets.remove(bullet)
-
-    last_asteroid_generation_time = 0
-
-    def handle_bullet_asteroid_collision(self, asteroid):
-        if asteroid in self.vec_huge_asteroids:
-            self.score += 20
-            self.score1 += 20
-            self.vec_huge_asteroids.remove(asteroid)
-            medium_asteroid_1 = med_asteroids(asteroid)
-            medium_asteroid_2 = med_asteroids(asteroid)
-
-            self.vec_medium_asteroids.extend([medium_asteroid_1, medium_asteroid_2])
-
-        elif asteroid in self.vec_medium_asteroids:
-            self.score += 50
-            self.score1 += 50
-            self.remove_asteroid(asteroid)
-
-        elif asteroid in self.vec_small_asteroids:
-            self.score += 100
-            self.score1 += 100
-            self.vec_small_asteroids.remove(asteroid)
-
-        self.create_particle_effect(asteroid.x, asteroid.y, WHITE, 3)
-        return True
-
-    def handle_game_over(self, reason):
-        print(reason)
-        self.game_over = True
-        self.GameOverSound.play()
-        self.game_over_time = time.time()
-
-    def check_collisions(self):
-        if self.game_over:
-            return
-
-        player_rect = pygame.Rect(self.player.x - 10, self.player.y - 24, 20, 34)
-
-        self.check_player_collision_with_asteroids(player_rect)
-        self.check_player_with_enemy_bullet_collision(player_rect)
-
-        self.check_bullet_asteroid_collisions()
-
-        if self.score1 == 10000 and self.player.lives < 3:
-            self.player.lives += 1
-            self.score1 = 0
-
-    def remove_asteroid(self, asteroid):
-        self.vec_medium_asteroids.remove(asteroid)
-        small_asteroid_1 = sma_asteroids(asteroid)
-        small_asteroid_2 = sma_asteroids(asteroid)
-        self.vec_small_asteroids.extend([small_asteroid_1, small_asteroid_2])
-
     st = 1
     count = 0
     delay = 0
 
     def run_game(self):
         clock = pygame.time.Clock()
-        self.create_random_huge_asteroids(num_asteroids=N)
-        self.create_enemy()
+        self.create_manager.create_random_huge_asteroids(num_asteroids=N)
+        self.create_manager.create_enemy()
         game_running = True
 
         while game_running:
@@ -453,7 +211,8 @@ class AsteroidsGame:
                 if not self.is_game_muted:
                     self.circular_mute_button.draw(self.screen)
                 else:
-                    self.circular_muted_button.draw(self.screen)    
+                    self.circular_muted_button.draw(self.screen)
+                    self.circular_mute_button.draw(self.screen)
                 font = pygame.font.Font(None, 48)
                 score_text = "Score: " + str(self.score)
                 score = font.render(score_text, True, BLUE)
@@ -465,10 +224,11 @@ class AsteroidsGame:
                 self.handle_input()
                 self.update_objects()
                 self.update_particles(self.elapsed_time)
-                self.check_collisions()
+                self.collision_manager.check_collisions()
                 self.draw_manager.draw_objects(self.vec_huge_asteroids, self.vec_medium_asteroids,
                                                self.vec_small_asteroids, self.vec_bullets, self.player,
                                                self.elapsed_time, self.vec_particles, self.enemy)
+
             if not self.game_over:
                 if self.score >= 99990:
                     font = pygame.font.Font(None, 72)
@@ -487,11 +247,11 @@ class AsteroidsGame:
                             self.stage = Stage(self.st)
                         if self.delay == 2:
                             self.count += 1
-                            self.create_random_huge_asteroids(num_asteroids=1)
+                            self.create_manager.create_random_huge_asteroids(num_asteroids=1)
                         else:
                             self.delay += 1
-                        self.last_asteroid_generation_time = time.time()
-                if time.time() - self.last_asteroid_generation_time >= 10.0:
+                        self.last_asteroid_gen_time = time.time()
+                if time.time() - self.last_asteroid_gen_time >= 10.0:
                     self.count = 0
                     self.delay = 0
 
@@ -506,7 +266,6 @@ class AsteroidsGame:
 
             pygame.display.flip()
             clock.tick(60)
-
         pygame.quit()
         sys.exit()
 
