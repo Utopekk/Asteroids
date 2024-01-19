@@ -12,7 +12,8 @@ from src.Stage import *
 from src.ShopButton import *
 from src.Bullet import *
 from src.DrawManager import *
-from src.utils import *
+from src.Utils import *
+from src.SoundManager import *
 
 
 N = 4
@@ -65,8 +66,6 @@ def sma_asteroids(asteroid):
     return small_asteroids
 
 
-def on_button_click():
-    print("Button Clicked!")
 
 
 class AsteroidsGame:
@@ -94,12 +93,28 @@ class AsteroidsGame:
         self.vec_particles = []
         self.player_respawn_timer = 0
         self.draw_manager = DrawManager(self.screen)
-        self.BulletDeploySound = pygame.mixer.Sound("resources\\363698__jofae__retro-gun-shot.mp3")
-        self.BulletDeploySound.set_volume(0.1)
-        self.ColisionSound = pygame.mixer.Sound("resources\\170144__timgormly__8-bit-explosion2.mp3")
-        self.ColisionSound.set_volume(0.1)
-        self.GameOverSound = pygame.mixer.Sound("resources\\412168__screamstudio__arcade-game-over.wav")
-        self.GameOverSound.set_volume(0.1)
+        self.BulletDeploySound = SoundEffect("resources\\363698__jofae__retro-gun-shot.mp3", 0.1)
+        self.ColisionSound = SoundEffect("resources\\170144__timgormly__8-bit-explosion2.mp3", 0.1)
+        self.GameOverSound = SoundEffect("resources\\412168__screamstudio__arcade-game-over.wav", 0.1)
+        
+        self.cmb_image_path = "resources\\muteButton.png"
+        self.circular_mute_button = CircularButton(60, 1000, 60, self.cmb_image_path, self.on_button_click)
+        self.cdb_image_path = "resources\\muteButton2.png"
+        self.circular_muted_button = CircularButton(60, 1000, 60, self.cdb_image_path, self.on_button_click)
+
+        self.is_game_muted = False
+
+    def on_button_click(self):
+        if not self.is_game_muted:
+            self.is_game_muted = True
+            self.BulletDeploySound.mute()
+            self.ColisionSound.mute()
+            self.GameOverSound.mute()
+        else:
+            self.is_game_muted = False
+            self.BulletDeploySound.unmute()
+            self.ColisionSound.unmute()
+            self.GameOverSound.unmute()
 
     def adjust_resolution(self):
         monitor_info = pygame.display.Info()
@@ -428,8 +443,17 @@ class AsteroidsGame:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     game_running = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        mouse_pos = pygame.mouse.get_pos()
+                        if self.circular_mute_button.is_clicked(mouse_pos):
+                            self.circular_mute_button.handle_click()
             if not self.game_over:
                 self.elapsed_time = 0.1
+                if not self.is_game_muted:
+                    self.circular_mute_button.draw(self.screen)
+                else:
+                    self.circular_muted_button.draw(self.screen)    
                 font = pygame.font.Font(None, 48)
                 score_text = "Score: " + str(self.score)
                 score = font.render(score_text, True, BLUE)

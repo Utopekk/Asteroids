@@ -1,6 +1,6 @@
 from SpaceObject import SpaceObject
 import math
-from utils import *
+from Utils import *
 
 
 class Player(SpaceObject):
@@ -41,3 +41,4 @@ class Player(SpaceObject):
         mx = [0.0, -16.0, 16.0]
         my = [-35.2, 16.0, 16.0]
         return self.calculate_vertices(mx, my)
+    

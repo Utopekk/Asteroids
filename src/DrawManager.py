@@ -1,23 +1,24 @@
+from Settings import *
 from main import *
 import math
-from utils import Utils
+from Utils import Utils
 import pygame
 
 
 class DrawManager:
     def __init__(self, screen):
         self.screen = screen
-        self.utils = Utils()
+        self.Utils = Utils()
 
     def draw_huge_asteroid_outline(self, asteroid):
-        rotated_vertices = self.utils.rotate_vertices(asteroid.vertices,
+        rotated_vertices = self.Utils.rotate_vertices(asteroid.vertices,
                                                       asteroid.angle)
         translated_vertices = [(x + asteroid.x, y + asteroid.y) for x, y in rotated_vertices]
 
         pygame.draw.polygon(self.screen, WHITE, translated_vertices, 2)
 
     def draw_asteroid_outline(self, asteroid):
-        rotated_vertices = self.utils.rotate_vertices(asteroid.vertices, asteroid.angle)
+        rotated_vertices = self.Utils.rotate_vertices(asteroid.vertices, asteroid.angle)
         translated_vertices = [(x + asteroid.x, y + asteroid.y) for x, y in rotated_vertices]
 
         pygame.draw.polygon(self.screen, BLACK, translated_vertices)
@@ -72,11 +73,10 @@ class DrawManager:
     def draw_objects(self, vec_huge_asteroids, vec_medium_asteroids, vec_small_asteroids, vec_bullets, player,
                      elapsed_time, vec_particles, enemy):
         self.draw_asteroids(vec_huge_asteroids, vec_small_asteroids)
-
         for bullet in vec_bullets:
             bullet.x += bullet.dx * elapsed_time * bullet.acceleration
             bullet.y += bullet.dy * elapsed_time * bullet.acceleration
-            bullet.x, bullet.y = self.utils.wrap(bullet.x, bullet.y)
+            bullet.x, bullet.y = self.Utils.wrap(bullet.x, bullet.y)
             pygame.draw.rect(self.screen, WHITE, pygame.Rect(bullet.x, bullet.y, 5, 5))
 
         for asteroid in vec_medium_asteroids:
