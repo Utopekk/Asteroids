@@ -19,6 +19,7 @@ class CreateManager:
 
     def create_particle_effect(self, x, y, color, num_particles):
         for _ in range(num_particles):
+
             lifetime = random.uniform(0.2, 0.5)
             dx = random.uniform(-50, 50)
             dy = random.uniform(-50, 50)

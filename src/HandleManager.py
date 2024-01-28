@@ -26,7 +26,7 @@ class HandleManager:
         self.GameOverSound.play()
         self.game_over_time = time.time()
 
-    def handle_player_asteroid_collision(self, asteroid, vec_particles):
+    def handle_player_asteroid_collision(self, asteroid):
         if self.player.destroyed:
             return
         if asteroid in self.vec_huge_asteroids:
@@ -39,7 +39,7 @@ class HandleManager:
         self.player.lives -= 1
 
         if self.player.lives > 0:
-            self.create_manager.create_particle_effect(self.player.y, WHITE, 3, vec_particles)
+            self.create_manager.create_particle_effect(self.player.x, self.player.y, WHITE, 3)
             self.player.destroyed = True
             self.player_respawn_timer = time.time() + 2
             self.ColisionSound.play()
@@ -68,6 +68,5 @@ class HandleManager:
             self.score += 100
             self.score1 += 100
             self.vec_small_asteroids.remove(asteroid)
-
-        self.create_manager.create_particle_effect(asteroid.y, WHITE, 3, vec_particles)
+        self.create_manager.create_particle_effect(asteroid.x, asteroid.y, WHITE, 3)
         return True

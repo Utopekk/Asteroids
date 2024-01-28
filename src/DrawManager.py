@@ -76,7 +76,6 @@ class DrawManager:
             bullet.y += bullet.dy * elapsed_time * bullet.acceleration
             bullet.x, bullet.y = self.Utils.wrap(bullet.x, bullet.y)
             pygame.draw.rect(self.screen, WHITE, pygame.Rect(bullet.x, bullet.y, 5, 5))
-
         for asteroid in vec_medium_asteroids:
             self.draw_asteroid_outline(asteroid)
 

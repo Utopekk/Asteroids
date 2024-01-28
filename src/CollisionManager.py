@@ -29,7 +29,7 @@ class CollisionManager:
 
     def check_player_collision_with_asteroids(self, player_rect):
         for asteroid in self.vec_small_asteroids[:]:
-            asteroid_rect = self.Utils.get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
+            asteroid_rect = Utils.get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
             if player_rect.colliderect(asteroid_rect):
                 self.handle_player_asteroid_collision(asteroid)
 
@@ -76,20 +76,17 @@ class CollisionManager:
         for bullet in bullets_to_remove:
             self.vec_bullets.remove(bullet)
 
-    last_asteroid_generation_time = 0
-
     def check_collisions(self):
-        bullets_to_remove = []
-        for bullet in self.vec_bullets:
-            bullet_rect = pygame.Rect(bullet.x, bullet.y, 5, 5)  # assuming bullet size is 5x5
-            for asteroid in self.vec_huge_asteroids + self.vec_medium_asteroids + self.vec_small_asteroids:
-                asteroid_rect = pygame.Rect(asteroid.x, asteroid.y, asteroid.size,
-                                            asteroid.size)  # assuming asteroid size is square
-                if bullet_rect.colliderect(asteroid_rect):
-                    self.handle_bullet_asteroid_collision(asteroid)
-                    bullets_to_remove.append(bullet)
-                    break
-        for bullet in bullets_to_remove:
-            self.vec_bullets.remove(bullet)
+        if self.game_over:
+            return
 
+        player_rect = pygame.Rect(self.player.x - 10, self.player.y - 24, 20, 34)
 
+        self.check_player_collision_with_asteroids(player_rect)
+        self.check_player_with_enemy_bullet_collision(player_rect)
+
+        self.check_bullet_asteroid_collisions()
+
+        if self.score1 == 10000 and self.player.lives < 3:
+            self.player.lives += 1
+            self.score1 = 0
