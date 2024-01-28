@@ -336,6 +336,7 @@ class AsteroidsGame:
                 if not self.is_game_muted:
                     self.circular_mute_button.draw(self.screen)
                 else:
+                    self.circular_mute_button.draw(self.screen)
                     self.circular_muted_button.draw(self.screen)
                 font = pygame.font.Font(None, 48)
                 score_text = "Score: " + str(self.score)
