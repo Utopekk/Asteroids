@@ -1,3 +1,4 @@
+
 import pygame
 
 
@@ -21,7 +22,6 @@ class CircularButton:
     def handle_click(self):
         if self.action_callback:
             self.action_callback()
-
 
 class SoundEffect:
     def __init__(self, path, volume):      

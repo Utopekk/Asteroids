@@ -1,6 +1,5 @@
 import math
 
-
 class Stage:
     def __init__(self, stage):
         self.stage = stage

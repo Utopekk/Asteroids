@@ -1,8 +1,8 @@
 import math
 from src.Settings import WIDTH, HEIGHT
-import pygame
 import random
-from src.Asteroid import Asteroid
+import pygame
+from Asteroid import Asteroid
 
 
 class Utils:
@@ -29,6 +29,18 @@ class Utils:
         return ox, oy
 
     @staticmethod
+    def generate_irregular_shape(size):
+        num_vertices = random.randint(5, 10)
+        angle_increment = 2 * math.pi / num_vertices
+        vertices = []
+        for i in range(num_vertices):
+            radius = size + random.uniform(-size / 2, size / 2)
+            x = radius * math.cos(i * angle_increment)
+            y = radius * math.sin(i * angle_increment)
+            vertices.append((x, y))
+        return vertices
+
+    @staticmethod
     def get_rotated_rect(vertices, angle, x, y):
         rotated_vertices = Utils.rotate_vertices(vertices, angle)
         min_x = min(x for x, y in rotated_vertices)
@@ -36,13 +48,6 @@ class Utils:
         max_x = max(x for x, y in rotated_vertices)
         max_y = max(y for x, y in rotated_vertices)
         return pygame.Rect(min_x + x, min_y + y, max_x - min_x, max_y - min_y)
-
-    @staticmethod
-    def remove_asteroid(asteroid, vec_medium_asteroids, vec_small_asteroids):
-        vec_medium_asteroids.remove(asteroid)
-        small_asteroid_1 = Utils.sma_asteroids(asteroid)
-        small_asteroid_2 = Utils.sma_asteroids(asteroid)
-        vec_small_asteroids.extend([small_asteroid_1, small_asteroid_2])
 
     @staticmethod
     def med_asteroids(asteroid):
@@ -71,13 +76,8 @@ class Utils:
         return small_asteroids
 
     @staticmethod
-    def generate_irregular_shape(size):
-        num_vertices = random.randint(5, 10)
-        angle_increment = 2 * math.pi / num_vertices
-        vertices = []
-        for i in range(num_vertices):
-            radius = size + random.uniform(-size / 2, size / 2)
-            x = radius * math.cos(i * angle_increment)
-            y = radius * math.sin(i * angle_increment)
-            vertices.append((x, y))
-        return vertices
+    def remove_asteroid(asteroid,vec_medium_asteroids,vec_small_asteroids):
+        vec_medium_asteroids.remove(asteroid)
+        small_asteroid_1 = Utils.sma_asteroids(asteroid)
+        small_asteroid_2 = Utils.sma_asteroids(asteroid)
+        vec_small_asteroids.extend([small_asteroid_1, small_asteroid_2])
