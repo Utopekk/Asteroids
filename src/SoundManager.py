@@ -1,4 +1,3 @@
-
 import pygame
 
 
@@ -24,19 +23,21 @@ class CircularButton:
             self.action_callback()
 
 class SoundEffect:
-    def __init__(self, path, volume):      
-        self.path = path
-        self.volume = volume
-        self.sound = pygame.mixer.Sound(self.path)
+    def __init__(self, sound_file, volume):
+        pygame.mixer.init()
+        self.sound = pygame.mixer.Sound(sound_file)
         self.sound.set_volume(volume)
 
     def play(self):
         self.sound.play()
 
+    def stop(self):
+        self.sound.stop()
+
     def mute(self):
         self.sound.set_volume(0)
 
     def unmute(self):
-        self.sound.set_volume(self.volume)        
+        self.sound.set_volume(20)
     
           

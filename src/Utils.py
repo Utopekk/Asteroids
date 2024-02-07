@@ -1,5 +1,5 @@
 import math
-from src.Settings import WIDTH, HEIGHT
+from Settings import WIDTH, HEIGHT
 import random
 import pygame
 from Asteroid import Asteroid

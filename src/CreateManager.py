@@ -1,10 +1,10 @@
 import random
-from src.Utils import Utils
-from src.Particle import Particle
-from src.Enemy import Enemy
-from src.Asteroid import Asteroid
+from Utils import Utils
+from Particle import Particle
+from Enemy import Enemy
+from Asteroid import Asteroid
 import math
-from src.Settings import WIDTH, HEIGHT
+from Settings import WIDTH, HEIGHT
 
 
 class CreateManager:
