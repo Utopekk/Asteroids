@@ -176,22 +176,22 @@ class AsteroidsGame:
             self.player.dy = 0.0
             self.player.destroyed = False
 
-        for asteroid_group in [self.vec_huge_asteroids, self.vec_medium_asteroids, self.vec_small_asteroids]:
-            for asteroid in asteroid_group[:]:
-                asteroid_rect = Utils.get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
-                enemy_rect = pygame.Rect(self.enemy.x, self.enemy.y, 40,
-                                         40)
-                if enemy_rect.colliderect(asteroid_rect):
-                    self.create_particle_effect(self.enemy.x, self.enemy.y, WHITE, 5)
-                    del self.enemy
-                    self.create_enemy()
+        if self.enemy is not None:  # Add this check
+            enemy_rect = pygame.Rect(self.enemy.x, self.enemy.y, 40, 40)
+            for asteroid_group in [self.vec_huge_asteroids, self.vec_medium_asteroids, self.vec_small_asteroids]:
+                for asteroid in asteroid_group[:]:
+                    asteroid_rect = Utils.get_rotated_rect(asteroid.vertices, asteroid.angle, asteroid.x, asteroid.y)
+                    if enemy_rect.colliderect(asteroid_rect):
+                        self.create_particle_effect(self.enemy.x, self.enemy.y, WHITE, 5)
+                        del self.enemy
+                        self.create_enemy()
 
-                    if asteroid in self.vec_huge_asteroids:
-                        self.vec_huge_asteroids.remove(asteroid)
-                    elif asteroid in self.vec_medium_asteroids:
-                        Utils.remove_asteroid(asteroid, self.vec_medium_asteroids, self.vec_small_asteroids)
-                    elif asteroid in self.vec_small_asteroids:
-                        self.vec_small_asteroids.remove(asteroid)
+                        if asteroid in self.vec_huge_asteroids:
+                            self.vec_huge_asteroids.remove(asteroid)
+                        elif asteroid in self.vec_medium_asteroids:
+                            Utils.remove_asteroid(asteroid, self.vec_medium_asteroids, self.vec_small_asteroids)
+                        elif asteroid in self.vec_small_asteroids:
+                            self.vec_small_asteroids.remove(asteroid)
 
         self.vec_particles = [particle for particle in self.vec_particles if particle.lifetime > 0]
         for particle in self.vec_particles:
@@ -341,8 +341,8 @@ class AsteroidsGame:
             return
 
         player_rect = pygame.Rect(self.player.x - 10, self.player.y - 24, 20, 34)
-        enemy_rect = pygame.Rect(self.enemy.x, self.enemy.y, 40, 40)
-
+        pygame.draw.rect(self.screen, "green", player_rect, 2)
+        enemy_rect = pygame.Rect(self.enemy.x, self.enemy.y, 95, 95)
         if player_rect.colliderect(enemy_rect):
             self.handle_player_enemy_collision()
 
@@ -360,18 +360,19 @@ class AsteroidsGame:
         if self.game_over or not self.enemy:
             return
 
-        enemy_rect = pygame.Rect(self.enemy.x, self.enemy.y, 40, 40)
+        enemy_rect = pygame.Rect(self.enemy.x+10, self.enemy.y+20, 80, 60)
 
         for bullet in self.vec_bullets:
             bullet_rect = pygame.Rect(bullet.x, bullet.y, 5, 5)
-            if bullet_rect.colliderect(enemy_rect):
+            if bullet_rect.colliderect(enemy_rect) and bullet.can_damage_enemy:
                 self.handle_player_bullet_enemy_collision(bullet)
 
     def handle_player_bullet_enemy_collision(self, bullet):
         self.vec_bullets.remove(bullet)
         self.create_particle_effect(self.enemy.x, self.enemy.y, WHITE, 3)
         del self.enemy
-        self.create_enemy()
+        self.enemy = None
+        self.enemy_spawn_timer = time.time() + 15
 
     def handle_game_over(self, reason):
         print(reason)
@@ -395,17 +396,12 @@ class AsteroidsGame:
             self.player.lives += 1
             self.score1 = 0
 
-    st = 1
-    count = 0
-    delay = 0
 
     def run_game(self):
         clock = pygame.time.Clock()
-        self.create_random_huge_asteroids(num_asteroids=N)
+        self.create_random_huge_asteroids(num_asteroids=1)
         game_running = True
-        self.create_enemy()
-        self.enemy_spawn_timer = time.time() + 15
-
+        self.enemy_spawn_timer = time.time() + 3
         while game_running:
             self.screen.fill(BLACK)
             for event in pygame.event.get():
@@ -451,21 +447,13 @@ class AsteroidsGame:
                     game_running = False
 
                 num_curr_asteroids = len(self.vec_huge_asteroids) + len(self.vec_medium_asteroids) + len(
-                    self.vec_small_asteroids) + self.delay
-                if num_curr_asteroids == 0 or 2.00 - self.stage.intervalSpawning <= time.time() - self.last_asteroid_gen_time <= 10.0:
-                    if self.count < self.stage.newAsteroids:
-                        if self.delay == 1:
-                            self.st += 1
-                            self.stage = Stage(self.st)
-                        if self.delay == 2:
-                            self.count += 1
-                            self.create_random_huge_asteroids(num_asteroids=1)
-                        else:
-                            self.delay += 1
-                        self.last_asteroid_generation_time = time.time()
-                if time.time() - self.last_asteroid_generation_time >= 10.0:
-                    self.count = 0
-                    self.delay = 0
+                    self.vec_small_asteroids)
+                asteroid_timer = time.time()
+                if num_curr_asteroids == 0 and asteroid_timer > 4:
+                    self.stage.stage += 1
+                    asteroid_timer = 0
+                    self.create_random_huge_asteroids(num_asteroids=N)
+
 
             if self.game_over:
                 if time.time() - self.game_over_time > 3:

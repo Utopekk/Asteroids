@@ -3,7 +3,9 @@ from EnemyBullet import EnemyBullet
 import pygame
 import math
 import time
-from Settings import BulletDeploySound
+from Settings import BulletDeploySound, RED
+
+
 class Enemy(SpaceObject):
     def __init__(self, screen, start_position, shooting_interval=3.0):
         if start_position == "top_left":
@@ -24,10 +26,12 @@ class Enemy(SpaceObject):
 
     def draw_enemy(self):
         self.screen.blit(self.enemy_image, (self.x, self.y))
+        enemy_rect = pygame.Rect(self.x+10, self.y+20, 80, 60)
+        pygame.draw.rect(self.screen, RED, enemy_rect, 2)
 
     def shoot_bullet(self, player_x, player_y):
         bullet_speed = 60.0
-        bullet_direction = math.atan2(player_y - self.y, player_x - self.x-50)
+        bullet_direction = math.atan2(player_y - self.y, player_x - self.x)
         bullet = EnemyBullet(
             n_size=0,
             x=self.x + 50,
@@ -58,7 +62,8 @@ class Enemy(SpaceObject):
         now = time.time()
         if now - self.last_time_shot >= self.shooting_interval:
             bullet = self.shoot_bullet(player_x, player_y)
+            if bullet and time.time() > bullet.damage_activation_time:
+                bullet.can_damage_enemy = True
             BulletDeploySound.play()
             self.last_time_shot = now
             return bullet
-

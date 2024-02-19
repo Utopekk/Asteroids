@@ -38,6 +38,6 @@ class SoundEffect:
         self.sound.set_volume(0)
 
     def unmute(self):
-        self.sound.set_volume(20)
+        self.sound.set_volume(10)
     
           
