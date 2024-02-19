@@ -341,7 +341,7 @@ class AsteroidsGame:
             return
 
         player_rect = pygame.Rect(self.player.x - 10, self.player.y - 24, 20, 34)
-        pygame.draw.rect(self.screen, "green", player_rect, 2)
+     
         enemy_rect = pygame.Rect(self.enemy.x, self.enemy.y, 95, 95)
         if player_rect.colliderect(enemy_rect):
             self.handle_player_enemy_collision()
@@ -370,6 +370,7 @@ class AsteroidsGame:
     def handle_player_bullet_enemy_collision(self, bullet):
         self.vec_bullets.remove(bullet)
         self.create_particle_effect(self.enemy.x, self.enemy.y, WHITE, 3)
+        ColisionSound.play()
         del self.enemy
         self.enemy = None
         self.enemy_spawn_timer = time.time() + 15
@@ -399,7 +400,7 @@ class AsteroidsGame:
 
     def run_game(self):
         clock = pygame.time.Clock()
-        self.create_random_huge_asteroids(num_asteroids=1)
+        self.create_random_huge_asteroids(num_asteroids=3)
         game_running = True
         self.enemy_spawn_timer = time.time() + 3
         while game_running:

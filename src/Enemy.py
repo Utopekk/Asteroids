@@ -26,8 +26,8 @@ class Enemy(SpaceObject):
 
     def draw_enemy(self):
         self.screen.blit(self.enemy_image, (self.x, self.y))
-        enemy_rect = pygame.Rect(self.x+10, self.y+20, 80, 60)
-        pygame.draw.rect(self.screen, RED, enemy_rect, 2)
+
+ 
 
     def shoot_bullet(self, player_x, player_y):
         bullet_speed = 60.0
