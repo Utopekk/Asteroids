@@ -76,7 +76,7 @@ class Utils:
         return small_asteroids
 
     @staticmethod
-    def remove_asteroid(asteroid,vec_medium_asteroids,vec_small_asteroids):
+    def remove_asteroid(asteroid, vec_medium_asteroids, vec_small_asteroids):
         vec_medium_asteroids.remove(asteroid)
         small_asteroid_1 = Utils.sma_asteroids(asteroid)
         small_asteroid_2 = Utils.sma_asteroids(asteroid)

@@ -22,6 +22,7 @@ class CircularButton:
         if self.action_callback:
             self.action_callback()
 
+
 class SoundEffect:
     def __init__(self, sound_file, volume):
         pygame.mixer.init()
@@ -39,5 +40,3 @@ class SoundEffect:
 
     def unmute(self):
         self.sound.set_volume(10)
-    
-          

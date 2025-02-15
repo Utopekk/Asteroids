@@ -1,29 +1,30 @@
 import time
 from Utils import Utils
-from Settings import N, WHITE
+from Settings import *
 from CreateManager import CreateManager
+
+N = 4
 
 
 class HandleManager:
-    def __init__(self, player, vec_particles, screen, stage):
-        self.game_over = False
+    def __init__(self, player, vec_particles, screen, stage, game_over,
+                 vec_huge_asteroids, vec_medium_asteroids, vec_small_asteroids):
+        self.game_over = game_over
         self.game_over_time = None
         self.player_respawn_timer = None
-        self.vec_huge_asteroids = []
-        self.vec_medium_asteroids = []
-        self.vec_small_asteroids = []
+        self.vec_huge_asteroids = vec_huge_asteroids
+        self.vec_medium_asteroids = vec_medium_asteroids
+        self.vec_small_asteroids = vec_small_asteroids
         self.score = 0
         self.score1 = 0
-        self.GameOverSound = None
-        self.ColisionSound = None
         self.player = player
         self.Utils = Utils()
         self.create_manager = CreateManager(self.player, vec_particles, self.vec_huge_asteroids, self.vec_small_asteroids, screen, stage)
 
     def handle_game_over(self, reason):
         print(reason)
-        self.game_over = True
-        self.GameOverSound.play()
+        self.game_over['status'] = True  # This updates the dictionary reference
+        GameOverSound.play()
         self.game_over_time = time.time()
 
     def handle_player_asteroid_collision(self, asteroid):
@@ -42,14 +43,14 @@ class HandleManager:
             self.create_manager.create_particle_effect(self.player.x, self.player.y, WHITE, 3)
             self.player.destroyed = True
             self.player_respawn_timer = time.time() + 2
-            self.ColisionSound.play()
+            ColisionSound.play()
         else:
             self.handle_game_over("Game Over")
 
         if not (self.vec_huge_asteroids or self.vec_medium_asteroids or self.vec_small_asteroids):
             self.create_manager.create_random_huge_asteroids(num_asteroids=N)
 
-    def handle_bullet_asteroid_collision(self, asteroid, vec_particles):
+    def handle_bullet_asteroid_collision(self, asteroid):
         if asteroid in self.vec_huge_asteroids:
             self.score += 20
             self.score1 += 20

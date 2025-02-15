@@ -25,19 +25,6 @@ class CreateManager:
             particle = Particle(x, y, color, lifetime, dx, dy)
             self.vec_particles.append(particle)
 
-
-    def create_enemy(self):
-        x = random.uniform(0, 0)
-        y = random.uniform(0, 0)
-        while (
-                self.player.x + 150 < x < self.player.x - 150 or
-                self.player.y + 150 < y < self.player.y - 150
-        ):
-            x = random.uniform(0, 0)
-            y = random.uniform(0, 0)
-
-        self.enemy = Enemy(screen=self.screen, x=x, y=y, dx=0, dy=0, angle=0)
-
     def create_random_asteroids(self, num_asteroids, size_range, is_huge=True):
         asteroids = self.vec_huge_asteroids if is_huge else self.vec_small_asteroids
 
