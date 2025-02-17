@@ -10,7 +10,7 @@ from src.CreateManager import *
 from src.HandleManager import *
 from src.Enemy import Enemy
 
-N = 4
+N = 3
 
 
 class AsteroidsGame:
@@ -311,7 +311,7 @@ class AsteroidsGame:
 
     def run_game(self):
         clock = pygame.time.Clock()
-        self.create_manager.create_random_huge_asteroids(num_asteroids=3)
+        self.create_manager.create_random_huge_asteroids(num_asteroids=N)
         game_running = True
         self.enemy_spawn_timer = time.time() + 3
         while game_running:
