@@ -1,4 +1,3 @@
-import pygame
 from HandleManager import *
 from SoundManager import SoundEffect
 

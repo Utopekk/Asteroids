@@ -1,7 +1,6 @@
 import random
 from Utils import Utils
 from Particle import Particle
-from Enemy import Enemy
 from Asteroid import Asteroid
 import math
 from Settings import WIDTH, HEIGHT

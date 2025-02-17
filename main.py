@@ -8,12 +8,12 @@ from src.Bullet import *
 from src.DrawManager import *
 from src.CreateManager import *
 from src.HandleManager import *
+from src.Enemy import Enemy
 
 N = 4
 
 
 class AsteroidsGame:
-
     def __init__(self):
         self.elapsed_time = None
         pygame.init()

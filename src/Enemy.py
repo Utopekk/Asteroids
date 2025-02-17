@@ -3,7 +3,7 @@ from EnemyBullet import EnemyBullet
 import pygame
 import math
 import time
-from Settings import BulletDeploySound, RED
+from Settings import BulletDeploySound
 
 
 class Enemy(SpaceObject):
