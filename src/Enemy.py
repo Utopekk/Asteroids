@@ -27,8 +27,6 @@ class Enemy(SpaceObject):
     def draw_enemy(self):
         self.screen.blit(self.enemy_image, (self.x, self.y))
 
- 
-
     def shoot_bullet(self, player_x, player_y):
         bullet_speed = 60.0
         bullet_direction = math.atan2(player_y - self.y, player_x - self.x)

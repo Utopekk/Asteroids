@@ -4,7 +4,7 @@ from SoundManager import SoundEffect
 
 class CollisionManager:
     def __init__(self, player, vec_huge_asteroids, vec_medium_asteroids, vec_small_asteroids, vec_bullets,
-                 handle_manager, collision_sound_path, vec_particles):
+                 handle_manager, collision_sound_path, vec_particles, game_over):
         self.player = player
         self.vec_huge_asteroids = vec_huge_asteroids
         self.vec_medium_asteroids = vec_medium_asteroids
@@ -14,8 +14,7 @@ class CollisionManager:
         self.handle_manager = handle_manager
         self.ColisionSound = SoundEffect(collision_sound_path, 1.0)
         self.vec_particles = vec_particles
-        self.game_over = False
-        self.score1 = 0
+        self.game_over = game_over
 
     def handle_player_asteroid_collision(self, asteroid):
         self.handle_manager.handle_player_asteroid_collision(asteroid, self.vec_particles)
@@ -74,7 +73,18 @@ class CollisionManager:
 
         for bullet in bullets_to_remove:
             self.vec_bullets.remove(bullet)
+    '''
+    def check_player_bullet_enemy_collision(self):
+        if self.game_over['status'] or not self.enemy:
+            return
 
+        enemy_rect = pygame.Rect(self.enemy.x+10, self.enemy.y+20, 80, 60)
+
+        for bullet in self.vec_bullets:
+            bullet_rect = pygame.Rect(bullet.x, bullet.y, 5, 5)
+            if bullet_rect.colliderect(enemy_rect) and bullet.can_damage_enemy:
+                self.handle_player_bullet_enemy_collision(bullet)
+    '''
     def check_collisions(self):
         if self.game_over:
             return
@@ -86,6 +96,4 @@ class CollisionManager:
 
         self.check_bullet_asteroid_collisions()
 
-        if self.score1 == 10000 and self.player.lives < 3:
-            self.player.lives += 1
-            self.score1 = 0
+

@@ -59,12 +59,6 @@ class AsteroidsGame:
             ColisionSound.unmute()
             GameOverSound.unmute()
 
-    def adjust_resolution(self):
-        monitor_info = pygame.display.Info()
-        monitor_width = monitor_info.current_w
-        monitor_height = monitor_info.current_h
-        self.screen = pygame.display.set_mode((monitor_width, monitor_height), pygame.FULLSCREEN)
-
     def update_particles(self, elapsed_time):
         self.vec_particles[:] = [particle for particle in self.vec_particles if particle.lifetime > 0]
         for particle in self.vec_particles:
@@ -182,13 +176,6 @@ class AsteroidsGame:
                             Utils.remove_asteroid(asteroid, self.vec_medium_asteroids, self.vec_small_asteroids)
                         elif asteroid in self.vec_small_asteroids:
                             self.vec_small_asteroids.remove(asteroid)
-
-    def draw_huge_asteroid_outline(self, asteroid):
-        rotated_vertices = Utils.rotate_vertices(asteroid.vertices, asteroid.angle)
-        translated_vertices = [(x + asteroid.x, y + asteroid.y) for x, y in rotated_vertices]
-
-        # Draw outline for huge asteroid
-        pygame.draw.polygon(self.screen, WHITE, translated_vertices, 2)
 
     def create_enemy(self):
         start_positions = ["top_left", "top_right", "bottom_left", "bottom_right"]
