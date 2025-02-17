@@ -29,8 +29,8 @@ class AsteroidsGame:
         self.game_over = {'status': False}
         self.game_over_time = 0
         self.level = Stage(1)
-        self.score = 0
-        self.score1 = 0
+        self.score = [0]
+        self.score_helper = self.score
         self.enemy = None
         self.enemy_spawn_timer = None
         self.player = Player(n_size=20.0, x=WIDTH / 2, y=HEIGHT / 2, dx=0.0, dy=0.0, angle=0.0,
@@ -42,7 +42,7 @@ class AsteroidsGame:
                                             self.vec_small_asteroids, self.screen, self.level)
         self.handle_manager = HandleManager(self.player, self.vec_particles, self.screen, self.level, self.game_over,
                                             self.vec_huge_asteroids, self.vec_medium_asteroids,
-                                            self.vec_small_asteroids)
+                                            self.vec_small_asteroids,self.score)
         self.circular_mute_button = CircularButton(60, 1000, 60, cmb_image_path, self.on_button_click)
         self.circular_muted_button = CircularButton(60, 1000, 60, cdb_image_path, self.on_button_click)
         self.is_game_muted = False
@@ -289,6 +289,7 @@ class AsteroidsGame:
         self.vec_bullets.remove(bullet)
         self.create_manager.create_particle_effect(self.enemy.x, self.enemy.y, WHITE, 3)
         ColisionSound.play()
+        self.score[0] += 100
         del self.enemy
         self.enemy = None
         self.enemy_spawn_timer = time.time() + 15
@@ -304,9 +305,9 @@ class AsteroidsGame:
         self.check_player_enemy_collision()
         self.check_bullet_asteroid_collisions()
         self.check_player_bullet_enemy_collision()
-        if self.score1 == 10000 and self.player.lives < 3:
+        if self.score_helper[0] >= 1000 and self.player.lives < 3:
             self.player.lives += 1
-            self.score1 = 0
+            self.score_helper[0] -= 1000
 
     def run_game(self):
         clock = pygame.time.Clock()
@@ -334,7 +335,7 @@ class AsteroidsGame:
                     self.circular_mute_button.draw(self.screen)
                     self.circular_muted_button.draw(self.screen)
                 font = pygame.font.Font(None, 48)
-                score_text = "Score: " + str(self.score)
+                score_text = "Score: " + str(self.score[0])
                 score = font.render(score_text, True, BLUE)
                 self.screen.blit(score, (30, 30))
                 font = pygame.font.Font(None, 48)
@@ -349,7 +350,7 @@ class AsteroidsGame:
                                                self.vec_small_asteroids, self.vec_bullets, self.player,
                                                self.elapsed_time, self.vec_particles, self.enemy)
             if not self.game_over['status']:
-                if self.score >= 99990:
+                if self.score[0] >= 99990:
                     font = pygame.font.Font(None, 72)
                     won_text = font.render("YOU WON!", True, WHITE)
                     self.screen.blit(won_text, (WIDTH // 2 - 132, HEIGHT // 2 - 40))

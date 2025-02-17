@@ -8,15 +8,14 @@ N = 4
 
 class HandleManager:
     def __init__(self, player, vec_particles, screen, stage, game_over,
-                 vec_huge_asteroids, vec_medium_asteroids, vec_small_asteroids):
+                 vec_huge_asteroids, vec_medium_asteroids, vec_small_asteroids,score):
         self.game_over = game_over
         self.game_over_time = None
         self.player_respawn_timer = None
         self.vec_huge_asteroids = vec_huge_asteroids
         self.vec_medium_asteroids = vec_medium_asteroids
         self.vec_small_asteroids = vec_small_asteroids
-        self.score = 0
-        self.score1 = 0
+        self.score = score
         self.player = player
         self.Utils = Utils()
         self.create_manager = CreateManager(self.player, vec_particles, self.vec_huge_asteroids, self.vec_small_asteroids, screen, stage)
@@ -52,8 +51,7 @@ class HandleManager:
 
     def handle_bullet_asteroid_collision(self, asteroid):
         if asteroid in self.vec_huge_asteroids:
-            self.score += 20
-            self.score1 += 20
+            self.score[0] += 20
             self.vec_huge_asteroids.remove(asteroid)
             medium_asteroid_1 = Utils.med_asteroids(asteroid)
             medium_asteroid_2 = Utils.med_asteroids(asteroid)
@@ -61,13 +59,11 @@ class HandleManager:
             self.vec_medium_asteroids.extend([medium_asteroid_1, medium_asteroid_2])
 
         elif asteroid in self.vec_medium_asteroids:
-            self.score += 50
-            self.score1 += 50
+            self.score[0] += 50
             self.Utils.remove_asteroid(asteroid, self.vec_medium_asteroids, self.vec_small_asteroids)
 
         elif asteroid in self.vec_small_asteroids:
-            self.score += 100
-            self.score1 += 100
+            self.score[0] += 100
             self.vec_small_asteroids.remove(asteroid)
         self.create_manager.create_particle_effect(asteroid.x, asteroid.y, WHITE, 3)
         return True
