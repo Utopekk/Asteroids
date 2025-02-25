@@ -10,3 +10,4 @@ Welcome to the Asteroids Game, a classic space-themed arcade experience! In this
 * Right: Turn right
 * Up: Go straight
 * Space: Shoot
+* F11: Fullscreen
