@@ -1,8 +1,9 @@
 import random
+import math
 from Utils import Utils
 from Particle import Particle
 from Asteroid import Asteroid
-import math
+from Enemy import Enemy
 from Settings import WIDTH, HEIGHT
 
 
@@ -50,3 +51,10 @@ class CreateManager:
         self.create_random_asteroids(num_asteroids,
                                      (50 + self.stage.asteroidDifficultySize, 80 + self.stage.asteroidDifficultySize),
                                      is_huge=True)
+
+    def create_enemy(self):
+        start_positions = ["top_left", "top_right", "bottom_left", "bottom_right"]
+        start_position = random.choice(start_positions)
+        self.enemy = Enemy(screen=self.screen, start_position=start_position, shooting_interval=3.0)
+        return self.enemy
+    

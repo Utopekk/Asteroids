@@ -8,7 +8,7 @@ N = 4
 
 class HandleManager:
     def __init__(self, player, vec_particles, screen, stage, game_over,
-                 vec_huge_asteroids, vec_medium_asteroids, vec_small_asteroids,score):
+                 vec_huge_asteroids, vec_medium_asteroids, vec_small_asteroids, score):
         self.game_over = game_over
         self.game_over_time = None
         self.player_respawn_timer = None
@@ -50,6 +50,7 @@ class HandleManager:
             self.create_manager.create_random_huge_asteroids(num_asteroids=N)
 
     def handle_bullet_asteroid_collision(self, asteroid):
+
         if asteroid in self.vec_huge_asteroids:
             self.score[0] += 20
             self.vec_huge_asteroids.remove(asteroid)
