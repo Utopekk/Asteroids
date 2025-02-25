@@ -1,10 +1,9 @@
 from HandleManager import *
-from SoundManager import SoundEffect
 
 
 class CollisionManager:
     def __init__(self, player, vec_huge_asteroids, vec_medium_asteroids, vec_small_asteroids, vec_bullets,
-                 handle_manager, collision_sound_path, vec_particles, game_over):
+                 handle_manager, vec_particles, game_over):
         self.player = player
         self.vec_huge_asteroids = vec_huge_asteroids
         self.vec_medium_asteroids = vec_medium_asteroids
@@ -12,7 +11,6 @@ class CollisionManager:
         self.vec_bullets = vec_bullets
         self.Utils = Utils()
         self.handle_manager = handle_manager
-        self.ColisionSound = SoundEffect(collision_sound_path, 1.0)
         self.vec_particles = vec_particles
         self.game_over = game_over
 
@@ -65,7 +63,7 @@ class CollisionManager:
                         if self.handle_bullet_asteroid_collision(asteroid):
                             bullets_to_remove.append(bullet)
                         asteroid_hit = True
-                        self.ColisionSound.play()
+                        ColisionSound.play()
                         break
 
                 if asteroid_hit:
@@ -95,5 +93,3 @@ class CollisionManager:
         self.check_player_with_enemy_bullet_collision(player_rect)
 
         self.check_bullet_asteroid_collisions()
-
-

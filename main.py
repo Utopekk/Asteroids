@@ -8,6 +8,7 @@ from src.Bullet import *
 from src.DrawManager import *
 from src.CreateManager import *
 from src.HandleManager import *
+from src.CollisionManager import *
 
 N = 3
 
@@ -42,6 +43,9 @@ class AsteroidsGame:
         self.handle_manager = HandleManager(self.player, self.vec_particles, self.screen, self.level, self.game_over,
                                             self.vec_huge_asteroids, self.vec_medium_asteroids,
                                             self.vec_small_asteroids, self.score)
+        self.collision_manager = CollisionManager(self.player, self.vec_huge_asteroids, self.vec_medium_asteroids,
+                                                  self.vec_small_asteroids, self.vec_bullets, self.handle_manager,
+                                                  self.vec_particles, self.game_over)
         self.circular_mute_button = CircularButton(60, 1000, 60, cmb_image_path, self.on_button_click)
         self.circular_muted_button = CircularButton(60, 1000, 60, cdb_image_path, self.on_button_click)
         self.is_game_muted = False
@@ -202,11 +206,8 @@ class AsteroidsGame:
                 if self.player.lives <= 0:
                     self.handle_manager.handle_game_over("Game Over")
 
-    last_asteroid_gen_time = 0
-
     def check_bullet_asteroid_collisions(self):
         bullets_to_remove = []
-
         for bullet in self.vec_bullets:
             bullet_rect = pygame.Rect(bullet.x, bullet.y, 5, 5)
             asteroid_hit = False
@@ -295,7 +296,6 @@ class AsteroidsGame:
         game_running = True
         self.enemy_spawn_timer = time.time() + 3
         while game_running:
-            print(f"Main: {id(self.enemy)}")
             self.screen.fill(BLACK)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
